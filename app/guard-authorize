@@ -1,0 +1,102 @@
+#!/usr/bin/python3 -I
+"""Install or remove the on-demand system helper for the signed control panel."""
+import fcntl
+import os
+from pathlib import Path
+import plistlib
+import shutil
+import subprocess
+import sys
+import tempfile
+
+
+LABEL = "local.flclash-egress-guard.control"
+BASE = Path("/Library/PrivilegedHelperTools") / LABEL
+JOB = Path("/Library/LaunchDaemons") / (LABEL + ".plist")
+APP = Path(__file__).resolve().parents[2]
+
+
+def launch(*args, check=True):
+    return subprocess.run(["/bin/launchctl", *args], stdout=subprocess.DEVNULL,
+                          stderr=subprocess.DEVNULL, check=check, timeout=15)
+
+
+def verify(bundle):
+    subprocess.run(["/usr/bin/codesign", "--verify", "--strict", str(bundle)], check=True,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def manage(action, uid):
+    target = "system/" + LABEL
+    service = dict(Label=LABEL, MachServices={LABEL: True}, ProgramArguments=[
+        str(BASE / "Approved.app/Contents/Resources/guard-helper")])
+    registered = launch("print", target, check=False).returncode == 0
+    if BASE.exists() or JOB.exists() or registered:
+        if (not (BASE / "owner").is_file() or int((BASE / "owner").read_text()) != uid
+                or (JOB.exists() and plistlib.loads(JOB.read_bytes()) != service)):
+            raise ValueError("已有另一项系统登记。")
+    if action == "remove":
+        if registered:
+            launch("bootout", target)
+        JOB.unlink(missing_ok=True)
+        if BASE.exists():
+            shutil.rmtree(BASE)
+        return
+    with tempfile.TemporaryDirectory(dir=BASE.parent) as folder:
+        temp = Path(folder)
+        new, old = temp / "new", temp / "old"
+        new.mkdir(mode=0o755)
+        copy = new / "Approved.app"
+        shutil.copytree(APP, copy)
+        for path in [new, copy, *copy.rglob("*")]:
+            path.chmod(0o755 if path.is_dir() or path.stat().st_mode & 0o111 else 0o644)
+        verify(copy)
+        (new / "owner").write_text(str(uid))
+        (new / "owner").chmod(0o644)
+        previous_job = JOB.read_bytes() if JOB.exists() else None
+        if registered:
+            launch("bootout", target)
+        if BASE.exists():
+            BASE.rename(old)
+        try:
+            new.rename(BASE)
+            with tempfile.NamedTemporaryFile(dir=JOB.parent, delete=False) as f:
+                plistlib.dump(service, f)
+                os.fchmod(f.fileno(), 0o644)
+            os.replace(f.name, JOB)
+            launch("bootstrap", "system", str(JOB))
+        except Exception:
+            if BASE.exists():
+                shutil.rmtree(BASE)
+            if old.exists():
+                old.rename(BASE)
+            if previous_job is None:
+                JOB.unlink(missing_ok=True)
+            else:
+                JOB.write_bytes(previous_job)
+                if registered:
+                    launch("bootstrap", "system", str(JOB))
+            raise
+
+
+def main():
+    uid = os.stat("/dev/console").st_uid
+    if not uid or os.geteuid() != 0 or sys.argv[1:] not in (["install", str(uid)], ["remove", str(uid)]):
+        return False
+    # The directory lock also covers concurrent reinstall and removal.
+    fd = os.open(BASE.parent, os.O_RDONLY)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        manage(sys.argv[1], uid)
+    finally:
+        os.close(fd)
+    return True
+
+
+if __name__ == "__main__":
+    try:
+        ok = main()
+    except (OSError, ValueError, subprocess.SubprocessError):
+        ok = False
+    print("系统助手设置已完成。" if ok else "系统助手设置未完成，可在面板重试。")
+    sys.exit(0 if ok else 1)

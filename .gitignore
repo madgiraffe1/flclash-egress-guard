@@ -1,0 +1,4 @@
+.DS_Store
+/outputs/flclash-guard/保护日志.txt
+*.app/
+__pycache__/

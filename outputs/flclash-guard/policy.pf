@@ -1,0 +1,15 @@
+# macOS pf. The controller substitutes the current core's GID and TUN.
+# Local exceptions apply in both the connected and the locked policy.
+pass out quick on lo0 all flags any no state label "fcg-local"
+pass out quick inet to { 10/8, 172.16/12, 192.168/16, 169.254/16 } flags any no state label "fcg-lan4"
+pass out quick inet to 224.0.0.0/24 flags any no state label "fcg-link4"
+pass out quick inet proto udp from any port 68 to 255.255.255.255 port 67 no state label "fcg-dhcp"
+pass out quick inet6 to { fc00::/7, fe80::/10, ff01::/16, ff02::/16 } flags any no state label "fcg-lan6"
+
+# One rule per address on the positively identified FlClash TUN.
+@TUN_PASSES@
+# Fragments without a transport header cannot establish a socket identity.
+block drop out quick all fragment label "fcg-fragment"
+# Present only while the designated core and TUN are healthy.
+@CORE_PASS@
+block drop out quick all label "fcg-deny"

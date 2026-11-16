@@ -1,0 +1,516 @@
+#!/usr/bin/python3 -I
+"""Desktop controls and connectivity checks for the FlClash egress guard."""
+
+import concurrent.futures
+import contextlib
+import datetime
+import errno
+import fcntl
+import grp
+import json
+import os
+from pathlib import Path
+import plistlib
+import re
+import runpy
+import socket
+import subprocess
+import sys
+import tempfile
+import time
+
+
+GUARD = Path(__file__).resolve().with_name("egress-guard")
+APP_MODE = sys.argv[1:2] == ["--app"]
+LOG = Path.home() / "Library/Logs/FlClashEgressGuard/保护日志.txt"
+MARKER = Path(tempfile.gettempdir()) / f"flclash-trial-guide-{os.getuid()}.pid"
+GUIDE_ID = str(os.getpid())
+HOST = "1.1.1.1"
+SITES = (("Google", "https://www.google.com/"), ("抖音", "https://www.douyin.com/"))
+NIC = "en0"
+TIMEOUT = 6
+PANEL = (GUARD.parents[2] if GUARD.parent.name == "Resources" and GUARD.parents[1].name == "Contents"
+         and GUARD.parents[2].name != "Approved.app"
+         else Path.home() / "Applications/FlClash 出网保护.app")
+LOGIN_LABEL = "local.flclash-egress-guard.panel"
+LOGIN_FILE = Path.home() / "Library/LaunchAgents" / (LOGIN_LABEL + ".plist")
+
+
+class Cancelled(Exception):
+    pass
+
+
+def app_request(kind, value, **fields):
+    print("@ui " + json.dumps({"kind": kind, "value": value, **fields}, ensure_ascii=False), flush=True)
+    data = sys.stdin.readline()
+    if not data:
+        raise Cancelled()
+    answer = json.loads(data)
+    if answer.get("cancelled"):
+        raise Cancelled()
+    return answer
+
+
+def controller(action):
+    if APP_MODE:
+        reply = app_request("admin", action)
+        ok, message = reply["ok"], reply.get("text", "")
+        return subprocess.CompletedProcess([action], 0 if ok else 1,
+                                          message if ok else "", "" if ok else message)
+    return subprocess.run(["/usr/bin/sudo", "-n", str(GUARD), action],
+                          capture_output=True, text=True)
+
+
+def prepare_admin():
+    return APP_MODE or subprocess.run(["/usr/bin/sudo", "-v"]).returncode == 0
+
+
+def ask(terminal_text, app_text):
+    if APP_MODE:
+        app_request("prompt", app_text)
+    else:
+        input(terminal_text)
+
+
+def step(number, detail):
+    if APP_MODE:
+        app_request("step", detail, number=str(number))
+
+
+def log_result(label, ok):
+    verdict = "通过" if ok else "不通过"
+    stamp = datetime.datetime.now().astimezone().isoformat(timespec="seconds")
+    # Only fixed labels and boolean outcomes reach this log.
+    try:
+        LOG.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        with LOG.open("a", encoding="utf-8") as f:
+            f.write(f"{stamp}\t{label}\t{verdict}\n")
+    except OSError:
+        print("日志暂时无法写入。结果仍显示在窗口里。", flush=True)
+
+
+def result(label, ok):
+    print(label, "通过" if ok else "不通过", flush=True)
+    log_result(label, ok)
+    return ok
+
+
+def status():
+    r = controller("status")
+    return r.stdout if r.returncode == 0 else ""
+
+
+def tcp(bind=False):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(TIMEOUT)
+        if bind:
+            # Darwin netinet/in.h; Apple's Python does not export IP_BOUND_IF.
+            try:
+                s.setsockopt(socket.IPPROTO_IP, 25, socket.if_nametoindex(NIC))
+            except OSError:
+                return "error"
+        try:
+            s.connect((HOST, 443))
+            return "connected"
+        except socket.timeout:
+            return "blocked"
+        except OSError as exc:
+            denied = (errno.ETIMEDOUT, errno.ECONNREFUSED, errno.EACCES, errno.EPERM)
+            return "blocked" if exc.errno in denied else "error"
+
+
+def curl(url):
+    args = ["/usr/bin/curl", "-q", "--silent", "--noproxy", "*", "--max-time",
+            str(TIMEOUT), "--output", "/dev/null", "--write-out", "%{time_connect} %{http_code}"]
+    # No -f: an HTTP error page still proves the site was reachable.
+    r = subprocess.run(args + [url], capture_output=True, text=True, timeout=TIMEOUT + 2)
+    fields = r.stdout.split()
+    if len(fields) != 2:
+        return "error"
+    if 100 <= int(fields[1]) <= 599:
+        return "http"
+    if float(fields[0]) > 0 or r.returncode == 0:
+        return "connected"
+    if r.returncode in (7, 28):
+        return "blocked"
+    return "dns" if r.returncode == 6 else "error"
+
+
+def site_requests(pool):
+    return [(name, pool.submit(curl, url)) for name, url in SITES]
+
+
+def site_results(pending, phase, expect_offline=False):
+    expected = ("blocked", "dns") if expect_offline else ("http",)
+    action = "连不上" if expect_offline else "可访问"
+    # Run and record both sites even if the first one fails.
+    outcomes = []
+    for name, job in pending:
+        outcome = job.result()
+        ok = result(f"{phase} · {name} {action}", outcome in expected)
+        outcomes.append(ok)
+        if not ok:
+            # A fixed sub-check is enough to diagnose a surprising result.
+            # Never append curl's raw stderr, headers, addresses or body.
+            detail, passed = {
+                "dns": ("解析网站名称", False),
+                "blocked": ("建立网站连接", False),
+                "connected": ("已建立网站连接", True),
+                "http": ("收到网站 HTTP 回应", True),
+                "error": ("curl 完成检测", False),
+            }[outcome]
+            log_result(f"{phase} · {name} · {detail}", passed)
+    if APP_MODE and phase == "日常保护" and not all(outcomes):
+        failed = "、".join(name for (name, _), ok in zip(pending, outcomes) if not ok)
+        app_request("issue", failed + " 没有返回网页。请检查 FlClash 里选用的节点，再点「重试」。")
+    return all(outcomes)
+
+
+def ready():
+    p = subprocess.run([str(GUARD), "preview"], stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL, timeout=25)
+    return p.returncode == 0
+
+
+def restored():
+    if not result("恢复后 · FlClash 已就绪", ready()):
+        return False
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+        return site_results(site_requests(pool), "恢复后")
+
+
+@contextlib.contextmanager
+def guide_lock():
+    # Both the Finder controls and the app use this per-user lock.
+    with MARKER.with_suffix(".lock").open("a") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        yield
+
+
+def owns_guide():
+    try:
+        return MARKER.read_text() == GUIDE_ID
+    except FileNotFoundError:
+        return False
+
+
+def cancel_guide():
+    with guide_lock():
+        MARKER.unlink(missing_ok=True)
+    return True
+
+
+def change(action, label):
+    if not owns_guide():
+        print("本次操作已取消。可以关掉这个窗口。")
+        return False
+    # Ask for the password before taking the lock so an idle password prompt
+    # cannot hold up recovery. The second check prevents reopening a cancelled session.
+    if not prepare_admin():
+        log_result(f"{label} · 管理员授权", False)
+        return result(label, False)
+    with guide_lock():
+        if not owns_guide():
+            return False
+        p = controller(action)
+    if p.returncode:
+        for clue, detail in (("正在运行", "等待旧窗口与核心完全退出"),
+                             ("无法确认", "核对现有进程"), ("尚未确认 GUI", "确认 FlClash 窗口已打开"),
+                             ("另一个特权进程", "检查专用身份是否仅由核心持有"),
+                             ("专用组", "核对专用身份"), ("TUN", "核对虚拟网卡"),
+                             ("活动过滤规则", "核对现有防火墙规则"), ("连接状态", "核对现有连接状态")):
+            if clue in p.stderr:
+                log_result(f"{label} · {detail}", False)
+                print(detail, flush=True)
+                break
+    return result(label, p.returncode == 0)
+
+
+@contextlib.contextmanager
+def guide_session():
+    with guide_lock():
+        MARKER.write_text(GUIDE_ID)
+    try:
+        yield
+    finally:
+        with guide_lock():
+            if owns_guide():
+                MARKER.unlink(missing_ok=True)
+
+
+def launch_info(engine):
+    # The unprivileged guide needs only process and directory-service reads.
+    # The privileged enable command independently checks ownership before loading rules.
+    try:
+        rows = engine["processes"]()
+    except engine["GuardError"]:
+        return "unknown", 0
+    if not any(p.path in (engine["GUI"], engine["CORE"]) for p in rows):
+        return "closed", 0
+    try:
+        gid = grp.getgrnam(engine["GROUP"]).gr_gid
+        core = engine["pair"](gid, rows)
+    except (KeyError, engine["GuardError"]):
+        return "ordinary", 0
+    return "dedicated", core.pid
+
+
+def launch_mode():
+    return launch_info(runpy.run_path(str(GUARD)))[0]
+
+
+def daily_enabled(text):
+    return ("系统 pf 已启用" in text and "保护已装载，核心使用" in text
+            and "限时试用剩余" not in text)
+
+
+def check_sites_and_rules():
+    step(4, "防火墙规则已生效。正在检查 Google 和抖音能否打开。")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+        if not site_results(site_requests(pool), "日常保护"):
+            return False
+    if not daily_enabled(status()):
+        return result("日常保护 · 网站检查后仍就绪", False)
+    print("日常保护已开启，Google 和抖音均可访问。")
+    return True
+
+
+def daily():
+    with guide_session():
+        if not APP_MODE:
+            print("日常保护生效后，退出 FlClash 就会锁住公网。开机是否自动保护，可用「开机保护.command」单独设置。")
+            print("需要回到原来的上网方式，双击同一文件夹里的「恢复上网.command」。")
+            input("如果现在要开启，请按回车。若出现 Password，输入 Mac 登录密码再按回车。")
+        step(1, "正在读取本机防火墙规则。")
+        if not prepare_admin():
+            return result("日常保护 · 管理员授权", False)
+        current = status()
+        if not current:
+            return result("日常保护 · 读取当前状态", False)
+        if daily_enabled(current):
+            if APP_MODE:
+                return check_sites_and_rules()
+            print("日常保护已经开启。")
+            return True
+        if "尚未读到本次开机启动项的锁定记录" in current:
+            result("登录后接通前 · 读到本次开机启动项的锁定记录", False)
+            print("本次开机锁定还没有确认。接下来会单独建立本次日常保护。")
+        elif "本次开机启动项已确认过公网锁定" in current:
+            result("登录后接通前 · 读到本次开机启动项的锁定记录", True)
+        if "公网出口已锁定（开机保护）" in current:
+            step(1, "正在检查开机保护是否已经阻断公网直连。")
+            print("检测到开机保护。先检查接通 FlClash 前公网是否已锁住。")
+            with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+                direct = pool.submit(tcp, True)
+                sites = site_requests(pool)
+                bound = result("登录后接通前 · 绑定 en0 的公网 TCP 连不上", direct.result() == "blocked")
+                offline = site_results(sites, "登录后接通前", expect_offline=True)
+            if not (bound and offline):
+                return False
+        step(2, "正在检查 FlClash 的启动身份和虚拟网卡。")
+        mode = launch_mode()
+        if mode == "unknown":
+            return result("日常保护 · 读取 FlClash 状态", False)
+        if mode != "dedicated":
+            step(2, "正在锁住公网，准备以专用身份打开 FlClash。")
+            if not change("lock", "日常保护 · 切换前锁住公网"):
+                return False
+            if mode == "ordinary":
+                ask("现在点右上角的 FlClash 图标，选「退出」。图标消失后，在这里按回车重新打开。",
+                    "请点菜单栏的 FlClash 图标，选「退出」。图标消失后回到这里点「继续」。公网已锁住。")
+                # The menu icon can disappear a little before the core exits.
+                for _ in range(10):
+                    if launch_mode() == "closed":
+                        break
+                    time.sleep(.25)
+            elif not APP_MODE:
+                input("FlClash 已关闭。按回车用保护方式打开它。")
+            step(2, "正在以专用身份打开 FlClash。")
+            if not change("start", "日常保护 · 以专用身份打开 FlClash"):
+                return False
+        step(2, "正在检查 FlClash 的虚拟网卡（TUN）。")
+        tun_ready = controller("preview").returncode == 0 if APP_MODE else ready()
+        if not tun_ready:
+            ask("等 FlClash 窗口显示 TUN（虚拟网卡）已开启，再回到这里按回车。",
+                "请打开 FlClash，确认「虚拟网卡（TUN）」开关已开启，再回到这里点「继续」。")
+        step(3, "正在加载出网保护规则，并从系统读回结果。")
+        if not change("enable", "日常保护 · 加载保护规则"):
+            return False
+        if not result("日常保护 · 已生效", daily_enabled(status())):
+            return False
+        return check_sites_and_rules()
+
+
+def login_job():
+    return dict(Label=LOGIN_LABEL, RunAtLoad=True, LimitLoadToSessionType="Aqua",
+                ProgramArguments=["/usr/bin/python3", "-I", "-B", str(PANEL / "Contents/Resources/guard-guide"),
+                                  "--app", "login"])
+
+
+def launchctl(*args):
+    return subprocess.run(["/bin/launchctl", *args], capture_output=True, text=True, timeout=8)
+
+
+def login_disabled(domain):
+    overrides = launchctl("print-disabled", domain)
+    if overrides.returncode:
+        raise OSError("登录项状态暂时不可读。")
+    return bool(re.search(r'"' + re.escape(LOGIN_LABEL) + r'"\s*=>\s*(?:true|disabled)', overrides.stdout, re.I))
+
+
+def login_ready():
+    if not LOGIN_FILE.is_file():
+        return False
+    if plistlib.loads(LOGIN_FILE.read_bytes()) != login_job():
+        return False
+    domain = "gui/" + str(os.getuid())
+    return not login_disabled(domain) and launchctl("print", domain + "/" + LOGIN_LABEL).returncode == 0
+
+
+def sync_login():
+    """Run as the desktop user, including when called by the root PF controller."""
+    engine = runpy.run_path(str(GUARD))
+    wanted = engine["boot_registered"]()
+    domain = "gui/" + str(os.getuid())
+    target = domain + "/" + LOGIN_LABEL
+    job = login_job()
+    previous = plistlib.loads(LOGIN_FILE.read_bytes()) if LOGIN_FILE.is_file() else None
+    if previous:
+        args = previous.get("ProgramArguments", [])
+        if (previous.get("Label") != LOGIN_LABEL or args[:3] != ["/usr/bin/python3", "-I", "-B"]
+                or args[-2:] != ["--app", "login"]):
+            return False
+    loaded = launchctl("print", target).returncode == 0
+    if loaded and not previous:
+        return False
+    if loaded and (not wanted or previous != job):
+        if launchctl("bootout", target).returncode:
+            return False
+        loaded = False
+    if not wanted:
+        LOGIN_FILE.unlink(missing_ok=True)
+        return True
+    if previous != job:
+        LOGIN_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(dir=LOGIN_FILE.parent, delete=False) as f:
+            candidate = Path(f.name)
+            try:
+                f.write(plistlib.dumps(job))
+                f.flush()
+                os.fchmod(f.fileno(), 0o644)
+                os.replace(candidate, LOGIN_FILE)
+            finally:
+                candidate.unlink(missing_ok=True)
+    if login_disabled(domain) and launchctl("enable", target).returncode:
+        return False
+    if not loaded and launchctl("bootstrap", domain, str(LOGIN_FILE)).returncode:
+        return False
+    return login_ready()
+
+
+def login_open():
+    # Also honor recovery performed with a previously installed controller.
+    engine = runpy.run_path(str(GUARD))
+    if not engine["boot_registered"]():
+        return True
+    binary = str(PANEL / "Contents/MacOS/FlClashGuard")
+    if any(p.path == binary and p.euid == os.getuid() for p in engine["processes"]()):
+        return True
+    result = subprocess.run(["/usr/bin/open", "-g", "-a", str(PANEL), "--args", "--menu-bar"],
+                            capture_output=True, timeout=8)
+    return result.returncode == 0
+
+
+def desktop_snapshot():
+    engine = runpy.run_path(str(GUARD))
+    registration = ("on" if engine["boot_registered"]() else
+                    "partial" if engine["boot_owned"]() else "off")
+    mode, pid = launch_info(engine)
+    try:
+        revision = engine["DB"].stat().st_mtime_ns
+    except FileNotFoundError:
+        revision = 0
+    # The signed UI reads the TUN and watcher from the system controller's verified status.
+    print(json.dumps(dict(boot=registration, login=login_ready(), mode=mode, core=pid,
+                          identity=f"{pid}/{revision}")))
+    return True
+
+
+def desktop_status():
+    text = status()
+    if text:
+        app_request("report", text.strip())
+        return True
+    print("未能读取系统防火墙状态。")
+    return False
+
+
+def desktop_boot(action):
+    enabling = action == "boot-on"
+    name = "开启开机保护" if enabling else "取消开机保护"
+    changed = controller(action)
+    if changed.returncode:
+        result(name, False)
+        print("可用「刷新状态」查看目前的开机设置和防火墙。")
+        return False
+    registered = runpy.run_path(str(GUARD))["boot_registered"]()
+    if not result(name, registered == enabling):
+        return False
+    print("开机保护已登记，登录后将自动显示菜单栏盾牌。" if enabling else "已取消开机保护和菜单栏登录启动，本次日常保护继续。")
+    return True
+
+
+def desktop_recover():
+    cancel_guide()
+    if not result("手动恢复 · 解除出网限制", controller("disable").returncode == 0):
+        return False
+    # The original group can be removed when its last process exits voluntarily.
+    try:
+        clean = launch_mode() != "dedicated" and controller("rollback").returncode == 0
+    except Cancelled:
+        clean = False
+    if clean:
+        log_result("手动恢复 · 清理临时设置", True)
+    if ready():
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+            site_results(site_requests(pool), "恢复后")
+    message = "已解除出网限制并取消开机保护。"
+    if not clean:
+        message += "等你下次手动退出 FlClash 后，可再次点「解除全部保护」清理专用组。"
+    print(message)
+    return True
+
+
+def main():
+    os.umask(0o077)
+    if APP_MODE and os.geteuid() != 0 and len(sys.argv) == 3:
+        action = sys.argv[2]
+        if action in ("boot-on", "boot-off", "recover"):
+            ok = desktop_recover() if action == "recover" else desktop_boot(action)
+            if ok:
+                try:
+                    status()
+                except Cancelled:
+                    pass  # The change already finished; rule verification is optional.
+            return ok
+        jobs = {"snapshot": desktop_snapshot, "status": desktop_status,
+                "daily": daily, "login": login_open, "sync-login": sync_login}
+        return action in jobs and jobs[action]()
+    jobs = {"daily": daily, "cancel": cancel_guide, "restored": restored}
+    if os.geteuid() == 0 or len(sys.argv) != 2 or sys.argv[1] not in jobs:
+        print("请从访达双击「开启日常保护.command」或「恢复上网.command」。")
+        return False
+    return jobs[sys.argv[1]]()
+
+
+if __name__ == "__main__":
+    try:
+        ok = main()
+    except Cancelled:
+        print("已取消操作。")
+        raise SystemExit(2)
+    except (OSError, ValueError, EOFError, KeyboardInterrupt, subprocess.SubprocessError):
+        ok = result("保护操作", False)
+    if not ok and sys.argv[1:] == ["daily"]:
+        print("日常保护未能确认就绪。需要恢复原来的上网方式，双击「恢复上网.command」。")
+    raise SystemExit(0 if ok else 1)
