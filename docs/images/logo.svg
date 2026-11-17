@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">FlClash Egress Guard</title>
+  <desc id="desc">A satin blue and teal macOS icon with a white outlined shield and a mint checkmark.</desc>
+  <defs>
+    <linearGradient id="tileBase" x1="135" y1="940" x2="895" y2="96" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#07325B"/>
+      <stop offset=".48" stop-color="#0C6388"/>
+      <stop offset="1" stop-color="#199CB5"/>
+    </linearGradient>
+    <radialGradient id="tileLight" cx="0" cy="0" r="1" gradientTransform="translate(798 114) rotate(122) scale(875 852)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A1FFF1" stop-opacity=".29"/>
+      <stop offset=".48" stop-color="#54D6D3" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#54D6D3" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tileDepth" cx="0" cy="0" r="1" gradientTransform="translate(629 357) rotate(111) scale(780 890)" gradientUnits="userSpaceOnUse">
+      <stop offset=".35" stop-color="#001D39" stop-opacity="0"/>
+      <stop offset="1" stop-color="#001D39" stop-opacity=".3"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="540" y1="87" x2="410" y2="934" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C8FFFF" stop-opacity=".63"/>
+      <stop offset=".14" stop-color="#A2F3F3" stop-opacity=".2"/>
+      <stop offset=".52" stop-color="#6EC9DD" stop-opacity=".04"/>
+      <stop offset="1" stop-color="#2A83A7" stop-opacity=".23"/>
+    </linearGradient>
+    <linearGradient id="shieldEdge" x1="405" y1="238" x2="629" y2="791" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset=".48" stop-color="#E4F0F6"/>
+      <stop offset="1" stop-color="#ACC8D8"/>
+    </linearGradient>
+    <linearGradient id="shieldFace" x1="512" y1="235" x2="512" y2="796" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset=".26" stop-color="#F4F8FC"/>
+      <stop offset=".56" stop-color="#FFFFFF"/>
+      <stop offset=".86" stop-color="#F9FCFF"/>
+      <stop offset="1" stop-color="#EAF3F9"/>
+    </linearGradient>
+    <linearGradient id="checkEdge" x1="459" y1="401" x2="567" y2="610" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E2FFF4"/>
+      <stop offset=".43" stop-color="#BBFFE5"/>
+      <stop offset="1" stop-color="#55CAA8"/>
+    </linearGradient>
+    <linearGradient id="checkFace" x1="527" y1="397" x2="504" y2="606" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C7FFE9"/>
+      <stop offset=".36" stop-color="#AEF9DB"/>
+      <stop offset=".68" stop-color="#93EFCB"/>
+      <stop offset="1" stop-color="#70DFB7"/>
+    </linearGradient>
+    <filter id="shieldRelief" x="256" y="208" width="512" height="620" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="blur"/>
+      <feOffset in="blur" dy="3" result="offset"/>
+      <feFlood flood-color="#002641" flood-opacity=".26" result="color"/>
+      <feComposite in="color" in2="offset" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="checkRelief" x="359" y="381" width="307" height="245" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.3" result="blur"/>
+      <feOffset in="blur" dy="3" result="offset"/>
+      <feFlood flood-color="#003A4A" flood-opacity=".22" result="color"/>
+      <feComposite in="color" in2="offset" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="tileClip"><rect x="87" y="87" width="850" height="850" rx="194"/></clipPath>
+    <path id="shield" d="M512 244C590 280 654 306 727 322V506C727 637 634 732 512 780C390 732 297 637 297 506V322C370 306 434 280 512 244Z"/>
+    <path id="check" d="M393 502L478 587L632 415"/>
+  </defs>
+  <g clip-path="url(#tileClip)">
+    <rect x="87" y="87" width="850" height="850" rx="194" fill="url(#tileBase)"/>
+    <rect x="87" y="87" width="850" height="850" rx="194" fill="url(#tileLight)"/>
+    <rect x="87" y="87" width="850" height="850" rx="194" fill="url(#tileDepth)"/>
+    <rect x="88.25" y="88.25" width="847.5" height="847.5" rx="192.75" stroke="url(#rim)" stroke-width="2.5"/>
+    <g stroke-linejoin="round">
+      <use xlink:href="#shield" stroke="url(#shieldEdge)" stroke-width="36" filter="url(#shieldRelief)"/>
+      <use xlink:href="#shield" stroke="url(#shieldFace)" stroke-width="32.5"/>
+    </g>
+    <g stroke-linecap="round" stroke-linejoin="round">
+      <use xlink:href="#check" stroke="url(#checkEdge)" stroke-width="45" filter="url(#checkRelief)"/>
+      <use xlink:href="#check" stroke="url(#checkFace)" stroke-width="41.5"/>
+    </g>
+  </g>
+</svg>
