@@ -40,7 +40,7 @@ struct DailyProgress {
         case .failed: suffix = "未完成"
         case .cancelled: suffix = "已取消"
         }
-        return "第 \(step) / 4 步 · " + suffix
+        return L10n.text("第 %d / 4 步 · %@", step, L10n.text(suffix))
     }
 }
 
@@ -60,6 +60,15 @@ final class Controls: ObservableObject {
     private var reading = false
     private var generation = 0
     private var lastVerifiedText: String?
+    private var logWindow: NSWindow?
+    private var logText: String?
+    private var languageObserver: AnyCancellable?
+
+    init() {
+        languageObserver = Localization.shared.$languageCode.dropFirst().receive(on: DispatchQueue.main).sink { [weak self] _ in
+            self?.updateLog()
+        }
+    }
     private lazy var authorization: NSAppleScript? = {
         guard let text = try? String(contentsOf: resources.appendingPathComponent("Authorize.applescript"), encoding: .utf8) else { return nil }
         return NSAppleScript(source: text)
@@ -149,7 +158,7 @@ final class Controls: ObservableObject {
         refresh()
     }
 
-    private func setConfirmed(_ text: String) {
+    func setConfirmed(_ text: String) {
         let enabled = text.contains("系统 pf 已启用")
         let lines = text.split(whereSeparator: \.isNewline)
         let prefix = "保护已装载，核心使用 "
@@ -328,10 +337,10 @@ final class Controls: ObservableObject {
     func removeAccess() {
         guard !busy, let window = window else { return }
         let alert = NSAlert()
-        alert.messageText = "撤销盾牌的一次授权？"
-        alert.informativeText = "当前出网保护继续运行。下次用盾牌管理防火墙时，需要重新授权。"
-        alert.addButton(withTitle: "保留授权")
-        alert.addButton(withTitle: "撤销授权")
+        alert.messageText = L10n.text("撤销盾牌的一次授权？")
+        alert.informativeText = L10n.text("当前出网保护继续运行。下次用盾牌管理防火墙时，需要重新授权。")
+        alert.addButton(withTitle: L10n.text("保留授权"))
+        alert.addButton(withTitle: L10n.text("撤销授权"))
         alert.beginSheetModal(for: window) { answer in
             guard answer == .alertSecondButtonReturn, !self.busy else { return }
             self.busy = true
@@ -388,10 +397,10 @@ final class Controls: ObservableObject {
         guard let window = window, !busy else { return }
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = "解除日常保护和开机保护？"
-        alert.informativeText = "应用将能直接访问公网。如果只是 FlClash 掉线，请返回后点「重新接通」。"
-        alert.addButton(withTitle: "返回")
-        alert.addButton(withTitle: "解除全部保护")
+        alert.messageText = L10n.text("解除日常保护和开机保护？")
+        alert.informativeText = L10n.text("应用将能直接访问公网。如果只是 FlClash 掉线，请返回后点「重新接通」。")
+        alert.addButton(withTitle: L10n.text("返回"))
+        alert.addButton(withTitle: L10n.text("解除全部保护"))
         alert.beginSheetModal(for: window) { answer in
             if answer == .alertSecondButtonReturn { self.start("recover") }
         }
@@ -402,10 +411,10 @@ final class Controls: ObservableObject {
         guard nextBoot == true else { start("boot-on"); return }
         guard let window = window, !busy else { return }
         let alert = NSAlert()
-        alert.messageText = "取消以后开机自动保护？"
-        alert.informativeText = "下次登录也会停止自动打开菜单栏 App。本次日常保护继续运行。"
-        alert.addButton(withTitle: "返回")
-        alert.addButton(withTitle: "取消开机保护")
+        alert.messageText = L10n.text("取消以后开机自动保护？")
+        alert.informativeText = L10n.text("下次登录也会停止自动打开菜单栏 App。本次日常保护继续运行。")
+        alert.addButton(withTitle: L10n.text("返回"))
+        alert.addButton(withTitle: L10n.text("取消开机保护"))
         alert.beginSheetModal(for: window) { choice in
             if choice == .alertSecondButtonReturn { self.start("boot-off") }
         }
@@ -414,14 +423,62 @@ final class Controls: ObservableObject {
     func openLog() {
         let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Logs/FlClashEgressGuard/保护日志.txt")
         if !FileManager.default.fileExists(atPath: url.path) { message = "还没有保护日志。"; return }
-        NSWorkspace.shared.open(url)
+        guard let text = try? String(contentsOf: url, encoding: .utf8) else {
+            message = "保护日志暂时无法读取。"; return
+        }
+        logText = text
+        if logWindow == nil {
+            let log = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 440),
+                               styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+            log.isReleasedWhenClosed = false
+            let scroll = NSScrollView(frame: log.contentView!.bounds)
+            scroll.autoresizingMask = [.width, .height]
+            scroll.hasVerticalScroller = true
+            let view = NSTextView(frame: scroll.bounds)
+            view.isEditable = false
+            view.isSelectable = true
+            view.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+            view.autoresizingMask = [.width]
+            view.textContainerInset = NSSize(width: 12, height: 12)
+            scroll.documentView = view
+            log.contentView = scroll
+            log.center()
+            logWindow = log
+        }
+        updateLog()
+        NSApp.activate(ignoringOtherApps: true)
+        logWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    private func updateLog() {
+        guard let log = logWindow, let text = logText,
+              let scroll = log.contentView as? NSScrollView,
+              let view = scroll.documentView as? NSTextView else { return }
+        log.title = L10n.text("保护日志")
+        view.string = L10n.message(text)
     }
 
     func close() { try? input?.close() }
 }
 
+struct LanguagePicker: View {
+    @ObservedObject private var localization = Localization.shared
+
+    var body: some View {
+        Picker(L10n.text("语言"), selection: $localization.preference) {
+            Text(L10n.text("跟随系统")).tag(LanguagePreference.system)
+            Text(L10n.text("language.zh-Hans")).tag(LanguagePreference.zhHans)
+            Text(L10n.text("language.en")).tag(LanguagePreference.english)
+        }
+        .pickerStyle(.menu)
+        .fixedSize()
+        .accessibilityIdentifier("interface-language")
+    }
+}
+
 struct GuardPanel: View {
     @ObservedObject var model: Controls
+    @ObservedObject private var localization = Localization.shared
     private let accent = Color(red: 0.08, green: 0.42, blue: 0.68)
 
     private var stateColor: Color {
@@ -443,18 +500,19 @@ struct GuardPanel: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Image(systemName: "shield.lefthalf.filled").foregroundStyle(accent).font(.title2)
-                Text("出网保护").font(.system(size: 23, weight: .semibold))
+                Text(L10n.text("出网保护")).font(.system(size: 23, weight: .semibold))
                 Spacer()
                 Button { model.start("status") } label: {
-                    Label("刷新状态", systemImage: "arrow.clockwise")
+                    Label(L10n.text("刷新状态"), systemImage: "arrow.clockwise")
                 }.disabled(model.busy)
             }
+            LanguagePicker()
             VStack(alignment: .leading, spacing: 9) {
                 HStack {
-                    Text("日常保护").font(.headline)
+                    Text(L10n.text("日常保护")).font(.headline)
                     Spacer()
                     if let time = model.confirmed?.time, model.progress == nil, !model.checking {
-                        Text("上次核对 " + time.formatted(date: .omitted, time: .standard))
+                        Text(L10n.text("上次核对 %@", L10n.time(time)))
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }
@@ -464,7 +522,7 @@ struct GuardPanel: View {
                     } else {
                         Circle().fill(model.progress == nil ? stateColor : .orange).frame(width: 10, height: 10)
                     }
-                    Text(model.progress?.heading ?? (model.checking ? "正在核对…" : model.stateTitle))
+                    Text(L10n.message(model.progress?.heading ?? (model.checking ? "正在核对…" : model.stateTitle)))
                         .font(.system(size: 22, weight: .medium))
                 }
                 if model.progress != nil || model.state != .connected {
@@ -472,7 +530,7 @@ struct GuardPanel: View {
                         ForEach(DailyProgress.titles.indices, id: \.self) { index in
                             HStack(spacing: 4) {
                                 Image(systemName: "\(index + 1).circle" + (model.progress?.step == index + 1 ? ".fill" : ""))
-                                Text(DailyProgress.titles[index])
+                                Text(L10n.message(DailyProgress.titles[index]))
                             }
                             .foregroundStyle(model.progress?.step == index + 1 ? accent : Color.secondary)
                             .accessibilityElement(children: .combine)
@@ -480,23 +538,23 @@ struct GuardPanel: View {
                     }.font(.callout)
                 }
                 if let p = model.progress {
-                    Text(p.detail).font(.callout).fixedSize(horizontal: false, vertical: true)
+                    Text(L10n.message(p.detail)).font(.callout).fixedSize(horizontal: false, vertical: true)
                     if p.phase == .failed || p.phase == .cancelled {
-                        Text("防火墙状态：" + model.stateTitle).font(.callout).foregroundStyle(.secondary)
+                        Text(L10n.text("防火墙状态：%@", L10n.message(model.stateTitle))).font(.callout).foregroundStyle(.secondary)
                     }
                 } else if model.checking {
-                    Text(model.approved ? "正在从系统读取保护状态。" : "请在 macOS 授权窗口输入管理员密码。")
+                    Text(L10n.message(model.approved ? "正在从系统读取保护状态。" : "请在 macOS 授权窗口输入管理员密码。"))
                         .font(.callout)
                 } else {
-                    Text(model.coreDetail).font(.callout).foregroundStyle(.secondary)
-                    if !stateExplanation.isEmpty { Text(stateExplanation).font(.callout) }
+                    Text(L10n.message(model.coreDetail)).font(.callout).foregroundStyle(.secondary)
+                    if !stateExplanation.isEmpty { Text(L10n.message(stateExplanation)).font(.callout) }
                 }
                 HStack {
                     if model.progress?.phase == .waiting {
-                        Button("继续") { model.answerStep(true) }.buttonStyle(.borderedProminent).tint(accent)
-                        Button("取消本次操作") { model.answerStep(false) }
+                        Button(L10n.text("继续")) { model.answerStep(true) }.buttonStyle(.borderedProminent).tint(accent)
+                        Button(L10n.text("取消本次操作")) { model.answerStep(false) }
                     } else {
-                        Button(model.dailyAction) { model.start("daily") }
+                        Button(L10n.message(model.dailyAction)) { model.start("daily") }
                             .buttonStyle(.borderedProminent).tint(accent)
                             .disabled(model.busy || (model.state == .connected && model.progress == nil))
                     }
@@ -506,89 +564,92 @@ struct GuardPanel: View {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 5) {
                     HStack(spacing: 10) {
-                        Text("开机保护").font(.headline)
-                        Text(model.bootLabel)
+                        Text(L10n.text("开机保护")).font(.headline)
+                        Text(L10n.message(model.bootLabel))
                             .foregroundStyle(model.nextBoot == true && model.snapshot?.login == true ? .green : .secondary)
                     }
-                    Text(model.nextBoot == true && model.snapshot?.login == false ? "防火墙已登记，菜单栏 App 的登录启动需要补全。" : "开机先锁住公网，登录桌面后自动显示盾牌。")
-                        .font(.callout).foregroundStyle(.secondary)
+                    Text(L10n.message(model.nextBoot == true && model.snapshot?.login == false ? "防火墙已登记，菜单栏 App 的登录启动需要补全。" : "开机先锁住公网，登录桌面后自动显示盾牌。"))
+                        .font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer()
-                Button(model.nextBoot == true ? (model.snapshot?.login == true ? "取消开机保护…" : "补全登录启动") : "开启开机保护") {
+                Button(L10n.message(model.nextBoot == true ? (model.snapshot?.login == true ? "取消开机保护…" : "补全登录启动") : "开启开机保护")) {
                     model.changeBoot()
                 }.disabled(model.busy || model.snapshot == nil || model.snapshot?.boot == "partial")
+                .fixedSize()
             }.padding(16).background(RoundedRectangle(cornerRadius: 12).fill(Color(nsColor: .controlBackgroundColor)))
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("恢复原来的上网方式").font(.headline)
-                    Text("解除当前限制，同时取消开机保护。").font(.callout).foregroundStyle(.secondary)
+                    Text(L10n.text("恢复原来的上网方式")).font(.headline)
+                    Text(L10n.text("解除当前限制，同时取消开机保护。")).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer()
-                Button("解除全部保护…") { model.recover() }.disabled(model.busy)
+                Button(L10n.text("解除全部保护…")) { model.recover() }.disabled(model.busy)
             }.padding(.horizontal, 4)
             Divider()
             HStack {
-                Text(model.approved ? "系统助手已授权" : "首次授权后，日常操作免输密码。")
+                Text(L10n.message(model.approved ? "系统助手已授权" : "首次授权后，日常操作免输密码。"))
                     .font(.caption).foregroundStyle(.secondary)
                 Spacer()
-                Button(model.approved ? "撤销授权…" : "一次授权") {
+                Button(L10n.message(model.approved ? "撤销授权…" : "一次授权")) {
                     if model.approved { model.removeAccess() } else { model.start("status") }
                 }.buttonStyle(.link).disabled(model.busy)
             }
             HStack(alignment: .center, spacing: 8) {
                 if model.busy { ProgressView().controlSize(.small) }
-                Text(model.message.isEmpty ? "关闭这个窗口后，已启用的防火墙会继续运行。" : model.message)
+                Text(L10n.message(model.message.isEmpty ? "关闭这个窗口后，已启用的防火墙会继续运行。" : model.message))
                     .font(.caption).foregroundStyle(.secondary).lineLimit(3)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Button("查看日志") { model.openLog() }.buttonStyle(.link)
+                Button(L10n.text("查看日志")) { model.openLog() }.buttonStyle(.link)
             }.frame(minHeight: 32)
-        }.padding(22).frame(width: 540).background(Color(nsColor: .windowBackgroundColor))
+        }.padding(22).frame(width: localization.panelWidth).background(Color(nsColor: .windowBackgroundColor))
     }
 }
 
 struct MenuPanel: View {
     @ObservedObject var model: Controls
+    @ObservedObject private var localization = Localization.shared
     let refresh: () -> Void
     let openPanel: () -> Void
     let quit: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label("FlClash 出网保护", systemImage: "shield.lefthalf.filled").font(.headline)
+            Label(L10n.text("FlClash 出网保护"), systemImage: "shield.lefthalf.filled").font(.headline)
             Divider()
             HStack {
-                Text("日常保护")
+                Text(L10n.text("日常保护"))
                 Spacer()
-                Text(model.progress?.heading ?? (model.checking ? "正在核对…" : model.stateTitle)).bold().foregroundStyle(
+                Text(L10n.message(model.progress?.heading ?? (model.checking ? "正在核对…" : model.stateTitle))).bold().foregroundStyle(
                     model.state == .connected ? Color.green : model.state == .locked ? Color.orange : Color.primary)
             }
             HStack {
-                Text("开机保护")
+                Text(L10n.text("开机保护"))
                 Spacer()
-                Text(model.bootLabel)
+                Text(L10n.message(model.bootLabel))
                     .foregroundStyle(model.nextBoot == true && model.snapshot?.login == true ? Color.green : Color.secondary)
             }
             if let p = model.progress {
-                Text(p.phase == .waiting ? "点「打开面板」，按当前步骤继续。" : p.detail)
+                Text(L10n.message(p.phase == .waiting ? "点「打开面板」，按当前步骤继续。" : p.detail))
                     .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             } else if let check = model.confirmed {
-                Text("最近核对 " + check.time.formatted(date: .omitted, time: .standard))
+                Text(L10n.text("最近核对 %@", L10n.time(check.time)))
                     .font(.caption).foregroundStyle(.secondary)
             } else {
-                Text(model.busy ? "正在读取防火墙规则…" : model.approved ? "点「刷新状态」核对当前规则。" : "首次点「刷新状态」可授权，以后免输密码。")
+                Text(L10n.message(model.busy ? "正在读取防火墙规则…" : model.approved ? "点「刷新状态」核对当前规则。" : "首次点「刷新状态」可授权，以后免输密码。"))
                     .font(.caption).foregroundStyle(.secondary)
             }
+            LanguagePicker()
             Divider()
             HStack(spacing: 10) {
-                Button(action: refresh) { Label("刷新状态", systemImage: "arrow.clockwise") }
+                Button(action: refresh) { Label(L10n.text("刷新状态"), systemImage: "arrow.clockwise") }
                     .disabled(model.busy)
-                Button("打开面板", action: openPanel)
+                Button(L10n.text("打开面板"), action: openPanel)
                 Spacer()
                 Button(action: quit) { Image(systemName: "power") }
-                    .buttonStyle(.plain).help("退出状态栏 App，防火墙继续运行")
-                    .accessibilityLabel("退出状态栏 App")
+                    .buttonStyle(.plain).help(L10n.text("退出状态栏 App，防火墙继续运行"))
+                    .accessibilityLabel(L10n.text("退出状态栏 App"))
             }
-        }.padding(16).frame(width: 288)
+        }.padding(16).frame(width: localization.menuWidth)
     }
 }
 
@@ -598,25 +659,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var statusItem: NSStatusItem!
     private let popover = NSPopover()
     private var observer: AnyCancellable?
+    private var languageObserver: AnyCancellable?
+    private var quitItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let main = NSMenu(), item = NSMenuItem(), appMenu = NSMenu()
         main.addItem(item); item.submenu = appMenu
-        let quit = NSMenuItem(title: "退出出网保护面板", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        item.title = L10n.text("FlClash 出网保护")
+        appMenu.title = L10n.text("FlClash 出网保护")
+        let quit = NSMenuItem(title: L10n.text("退出出网保护面板"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appMenu.addItem(quit)
+        quitItem = quit
         NSApp.mainMenu = main
         let host = NSHostingController(rootView: GuardPanel(model: controls))
         window = NSWindow(contentViewController: host)
-        window.title = "FlClash 出网保护"
+        window.title = L10n.text("FlClash 出网保护")
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.isReleasedWhenClosed = false
-        window.contentMinSize = NSSize(width: 540, height: 450)
-        window.setContentSize(NSSize(width: 540, height: max(450, host.view.fittingSize.height)))
+        window.contentMinSize = NSSize(width: Localization.shared.panelWidth, height: 450)
+        window.setContentSize(NSSize(width: Localization.shared.panelWidth, height: max(450, host.view.fittingSize.height)))
         window.setFrameAutosaveName("FlClashEgressGuardPanel")
         window.delegate = self
         controls.window = window
         window.center()
         installStatusItem()
+        languageObserver = Localization.shared.$languageCode.dropFirst().receive(on: DispatchQueue.main).sink { [weak self] _ in
+            self?.updateLanguage()
+        }
         let notifications = NSWorkspace.shared.notificationCenter
         for name in [NSWorkspace.didLaunchApplicationNotification, NSWorkspace.didTerminateApplicationNotification] {
             notifications.addObserver(self, selector: #selector(flclashChanged(_:)), name: name, object: nil)
@@ -635,7 +704,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if let button = statusItem.button {
             button.target = self
             button.action = #selector(togglePopover)
-            button.setAccessibilityLabel("FlClash 出网保护")
+            button.setAccessibilityLabel(L10n.text("FlClash 出网保护"))
         }
         let panel = MenuPanel(model: controls, refresh: { [weak self] in
             guard let self = self else { return }
@@ -660,13 +729,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         case .off: symbol = "xmark.shield"
         case .unknown: symbol = "exclamationmark.shield"
         }
-        let image = NSImage(systemSymbolName: symbol, accessibilityDescription: "FlClash 出网保护")
+        let image = NSImage(systemSymbolName: symbol, accessibilityDescription: L10n.text("FlClash 出网保护"))
         image?.isTemplate = true
         button.image = image
-        let value = "日常保护" + (controls.progress?.heading ?? controls.stateTitle) + "，开机保护" + controls.bootLabel
-        button.toolTip = "FlClash 出网保护\n" + value
+        let value = L10n.text("日常保护：%@；开机保护：%@", L10n.message(controls.progress?.heading ?? controls.stateTitle), L10n.message(controls.bootLabel))
+        button.toolTip = L10n.text("FlClash 出网保护") + "\n" + value
+        button.setAccessibilityLabel(L10n.text("FlClash 出网保护"))
         button.setAccessibilityValue(value)
         if !controls.busy && popover.isShown { popover.behavior = .transient }
+    }
+
+    private func updateLanguage() {
+        window.title = L10n.text("FlClash 出网保护")
+        quitItem?.title = L10n.text("退出出网保护面板")
+        NSApp.mainMenu?.items.first?.title = L10n.text("FlClash 出网保护")
+        NSApp.mainMenu?.items.first?.submenu?.title = L10n.text("FlClash 出网保护")
+        window.contentMinSize = NSSize(width: Localization.shared.panelWidth, height: 450)
+        if let content = window.contentView {
+            content.layoutSubtreeIfNeeded()
+            window.setContentSize(NSSize(width: Localization.shared.panelWidth, height: max(450, content.fittingSize.height)))
+        }
+        if let content = popover.contentViewController?.view { popover.contentSize = content.fittingSize }
+        updateIcon()
     }
 
     @objc private func togglePopover() {
@@ -694,6 +778,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if verify { controls.openStatus() } else { controls.refresh() }
     }
     func applicationDidBecomeActive(_ notification: Notification) {
+        Localization.shared.refreshSystemLanguage()
         if window?.isVisible == true { controls.refresh() }
     }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

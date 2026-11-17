@@ -6,6 +6,9 @@
 // network request: each scene only assigns sample values to the view model and
 // draws offscreen. Sample data contains no real addresses or user names.
 
+import ImageIO
+import UniformTypeIdentifiers
+
 struct Palette: Decodable {
     let annotation: String
     let ink: String
@@ -30,6 +33,7 @@ enum Target { case refresh, primary, secondary, boot, recover, authLink, logLink
 final class ScreenshotRenderer {
     let out: URL
     let annotation: NSColor
+    let suffix: String
     let scale: CGFloat = 2
     // A fixed, obviously illustrative time: 09:41.
     let sampleTime: Date = {
@@ -40,6 +44,7 @@ final class ScreenshotRenderer {
 
     init(out: URL, palette: Palette) {
         self.out = out
+        suffix = Localization.shared.languageCode == "en" ? ".en" : ""
         annotation = Palette.color(palette.annotation)
     }
 
@@ -53,9 +58,14 @@ final class ScreenshotRenderer {
     }
 
     func write(_ rep: NSBitmapImageRep, _ name: String) {
-        let url = out.appendingPathComponent(name)
+        let url = out.appendingPathComponent(filename(name))
         try! rep.representation(using: .png, properties: [:])!.write(to: url)
-        print("wrote \(name) (\(rep.pixelsWide)x\(rep.pixelsHigh))")
+        print("wrote \(url.lastPathComponent) (\(rep.pixelsWide)x\(rep.pixelsHigh))")
+    }
+
+    func filename(_ name: String) -> String {
+        let url = URL(fileURLWithPath: name)
+        return url.deletingPathExtension().lastPathComponent + suffix + "." + url.pathExtension
     }
 
     // MARK: Sample states
@@ -88,11 +98,12 @@ final class ScreenshotRenderer {
     func capturePanel(_ model: Controls) -> (NSBitmapImageRep, NSSize, [Target: NSRect]) {
         let host = NSHostingController(rootView: GuardPanel(model: model).environment(\.controlActiveState, .key))
         let window = ActiveLookingWindow(contentViewController: host)
-        window.title = "FlClash 出网保护"
+        window.title = L10n.text("FlClash 出网保护")
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.appearance = NSAppearance(named: .aqua)
-        window.contentMinSize = NSSize(width: 540, height: 450)
-        window.setContentSize(NSSize(width: 540, height: max(450, host.view.fittingSize.height)))
+        let width = Localization.shared.panelWidth
+        window.contentMinSize = NSSize(width: width, height: 450)
+        window.setContentSize(NSSize(width: width, height: max(450, host.view.fittingSize.height)))
         window.setFrameOrigin(NSPoint(x: -30000, y: -30000))
         RunLoop.current.run(until: Date().addingTimeInterval(0.4))
         let frameView = window.contentView!.superview!
@@ -112,6 +123,9 @@ final class ScreenshotRenderer {
         walk(host.view)
         let order: (NSRect, NSRect) -> Bool = { $0.maxY != $1.maxY ? $0.maxY > $1.maxY : $0.minX < $1.minX }
         rings.sort(by: order); links.sort(by: order)
+        // The second focus ring belongs to the language picker below Refresh.
+        // It is not one of the tutorial’s protection actions.
+        if rings.count >= 5 { rings.remove(at: 1) }
         var targets: [Target: NSRect] = [:]
         if rings.count >= 4 {
             targets[.refresh] = rings[0]
@@ -166,7 +180,9 @@ final class ScreenshotRenderer {
 
         NSGraphicsContext.saveGraphicsState()
         shape.addClip()
-        rep.draw(in: frame)
+        let capture = NSImage(size: size)
+        capture.addRepresentation(rep)
+        capture.draw(in: frame, from: .zero, operation: .sourceOver, fraction: 1)
         NSGraphicsContext.restoreGraphicsState()
 
         let border = NSBezierPath(roundedRect: frame.insetBy(dx: 0.25, dy: 0.25), xRadius: radius, yRadius: radius)
@@ -212,6 +228,34 @@ final class ScreenshotRenderer {
             return (rect, item.1)
         }
         write(compose(rep, size: size, radius: 12, highlights: marks), name)
+    }
+
+    /// A sequence of sample states from the real panel, without invoking any actions.
+    func animation(_ models: [Controls]) {
+        let captures = models.map { capturePanel($0) }
+        let width = captures.map { $0.1.width }.max()! + 60
+        let height = captures.map { $0.1.height }.max()! + 60
+        let url = out.appendingPathComponent(filename("ui-demo.gif"))
+        let destination = CGImageDestinationCreateWithURL(url as CFURL, UTType.gif.identifier as CFString,
+                                                         captures.count, nil)!
+        CGImageDestinationSetProperties(destination, [kCGImagePropertyGIFDictionary:
+            [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+        for (index, capture) in captures.enumerated() {
+            let rep = bitmap(size: NSSize(width: width, height: height))
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+            NSColor.white.setFill()
+            NSRect(x: 0, y: 0, width: width, height: height).fill()
+            let composed = compose(capture.0, size: capture.1, radius: 12)
+            composed.draw(in: NSRect(x: (width - composed.size.width) / 2,
+                                    y: height - composed.size.height,
+                                    width: composed.size.width, height: composed.size.height))
+            NSGraphicsContext.restoreGraphicsState()
+            CGImageDestinationAddImage(destination, rep.cgImage!, [kCGImagePropertyGIFDictionary:
+                [kCGImagePropertyGIFDelayTime: index == 1 ? 4.0 : 2.5]] as CFDictionary)
+        }
+        precondition(CGImageDestinationFinalize(destination), "Could not write GIF")
+        print("wrote \(url.lastPathComponent) (\(captures.count) sample states)")
     }
 
     func menuIcons() {
@@ -282,12 +326,15 @@ final class ScreenshotRenderer {
         write(compose(menu, size: menuSize, radius: 12), "ui-menubar.png")
 
         menuIcons()
+        animation([firstRun, waiting, connected(boot: "off"), locked, connected(boot: "on")])
     }
 }
 
 MainActor.assumeIsolated {
     let args = CommandLine.arguments
-    guard args.count >= 3 else { print("usage: render <out-dir> <palette.json>"); exit(2) }
+    guard args.count >= 4 else { print("usage: render <out-dir> <palette.json> <en|zh-Hans>"); exit(2) }
+    Localization.shared.configure(resources: Bundle.main, defaults: nil)
+    Localization.shared.preference = args[3] == "en" ? .english : .zhHans
     NSApplication.shared.setActivationPolicy(.prohibited)
     NSApp.appearance = NSAppearance(named: .aqua)
     let palette = try! JSONDecoder().decode(Palette.self, from: Data(contentsOf: URL(fileURLWithPath: args[2])))
