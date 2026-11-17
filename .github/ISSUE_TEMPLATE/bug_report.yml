@@ -1,0 +1,79 @@
+name: Bug report / 问题报告
+description: Something doesn't work as the README describes. / 功能与说明不符。
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! / 感谢反馈！
+
+        **Before you submit, remove personal data:** node or server addresses, subscription links, real IP addresses, Wi-Fi names, user names and home-folder paths.
+        **提交前请删除个人信息：** 节点或服务器地址、订阅链接、真实 IP、Wi-Fi 名称、用户名和个人目录路径。
+
+        Security problems don't belong here; see [SECURITY.md](../blob/main/SECURITY.md). / 安全问题请勿在此提交，见 SECURITY.md。
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened? / 发生了什么？
+      description: Also tell us what you expected. / 也请写明你预期的结果。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / 复现步骤
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: panel
+    attributes:
+      label: Panel status and messages / 面板状态和提示
+      description: For example "第 2 / 4 步 · 未完成" and the message below it. A screenshot is fine if it shows nothing personal. / 例如「第 2 / 4 步 · 未完成」及下方提示；截图请确认不含个人信息。
+  - type: textarea
+    id: log
+    attributes:
+      label: Log lines / 日志
+      description: Relevant lines from 查看日志 (~/Library/Logs/FlClashEgressGuard/保护日志.txt). / 「查看日志」中的相关行。
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: App version / App 版本
+      placeholder: "1.1.0"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version / macOS 版本
+      placeholder: "15.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: chip
+    attributes:
+      label: Mac chip / 芯片
+      options:
+        - Apple silicon
+        - Intel
+    validations:
+      required: true
+  - type: input
+    id: flclash
+    attributes:
+      label: FlClash version / FlClash 版本
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist / 确认
+      options:
+        - label: I removed personal data (addresses, subscription links, IPs, user names). / 我已删除个人信息。
+          required: true
+        - label: I searched the existing issues. / 我已搜索过现有 issue。
+          required: true

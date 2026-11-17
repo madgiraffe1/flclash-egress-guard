@@ -1,0 +1,31 @@
+name: Feature request / 功能建议
+description: Suggest an idea or improvement. / 提出新想法或改进建议。
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea! The [roadmap](../blob/main/README.md#roadmap) lists what's already being considered.
+        感谢建议！已在考虑的方向见 README 的路线图。
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve? / 想解决什么问题？
+      description: Describe the situation, not only the solution. / 请描述遇到的情况，而不只是方案。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen? / 希望怎样实现？
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered / 考虑过的其他办法
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else? / 其他补充
+      description: macOS version, network setup and so on. Please leave out personal data. / 例如 macOS 版本、网络环境等，请勿包含个人信息。
