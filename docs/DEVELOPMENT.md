@@ -19,6 +19,9 @@
 ```text
 app/                      macOS menu-bar app (Swift/SwiftUI) and its privileged helper
   main.swift              menu-bar shield, panel and the step-by-step flow
+  Localization.swift      language preference, system fallback and localized UI text
+  GuardMessages.swift     translates controller output at the display boundary
+  Resources/*.lproj/      English and Simplified Chinese string tables and display names
   GuardService.swift      XPC protocol and signature checks shared by app and helper
   GuardHelper.swift       on-demand root helper: XPC → egress-guard
   guard-authorize         installs or removes the helper (run through the macOS admin dialog)
@@ -49,6 +52,10 @@ sh app/build.sh "/tmp/FlClash 出网保护.app"
 None of these touch the firewall:
 
 ```sh
+# Language resolution, live text switching, isolated preference persistence,
+# translated controller messages, source/catalog coverage, and README assets.
+sh tests/check.sh
+
 # Python syntax (all three files are Python without a .py extension)
 for f in outputs/flclash-guard/egress-guard outputs/flclash-guard/guard-guide app/guard-authorize; do
   /usr/bin/python3 -I -c 'import ast, sys; ast.parse(open(sys.argv[1], encoding="utf-8").read(), sys.argv[1])' "$f"
@@ -76,16 +83,18 @@ sh docs/tools/render-screenshots.sh /tmp/fcg-shots
 - **Privacy:** never print or log raw output of `pfctl`, `ifconfig`, `route` or `curl`; it can contain addresses. User-facing errors are fixed sentences (see `command()` and `main()` in `egress-guard`).
 - **Swift:** Swift 5 language mode, macOS 13 deployment target, Apple frameworks only.
 - **Shell:** POSIX `sh` with absolute paths for system tools.
-- **User-facing text** is Simplified Chinese; match the tone and punctuation of existing messages. If a message changes, update the troubleshooting tables in both READMEs.
+- **User-facing text** lives in `app/Resources/en.lproj/` and `zh-Hans.lproj/`: `Localizable.strings` contains interface labels, and `GuardMessages.strings` contains controller and authorization messages. Update both languages together. Raw controller output remains unchanged because the app and guide use it to recognize protection state; `GuardMessages` translates it only when displayed. If a message changes, update the troubleshooting tables in both READMEs.
 
 ## Updating the README images
 
 Screenshots are rendered from the app's real SwiftUI views with sample data. The renderer doesn't start the controller, the helper or pfctl and makes no network requests, so it is safe on a protected Mac:
 
 ```sh
-sh docs/tools/render-screenshots.sh                    # docs/images/ui-*.png, menubar-*.png, app-icon.png
+sh docs/tools/render-screenshots.sh                    # Chinese ui-*.png, English ui-*.en.png, menu icons and GIFs
 /usr/bin/python3 -I docs/tools/make-illustrations.py   # banner, overview and install illustrations (SVG, en + zh-CN)
 ```
+
+The renderer uses an in-memory language preference, not the installed app’s preferences. Chinese images keep their existing names; English equivalents add `.en` before the extension (`ui-connected.en.png`, `menubar-connected.en.png`, `ui-demo.en.gif`). `ui-demo.gif` and its English counterpart animate sample states from the same real SwiftUI views. The README explicitly labels them as sample states. Check all referenced paths with exact case before committing. The logo remains `docs/images/logo.svg`.
 
 Colours live in `docs/tools/palette.json`; `make-illustrations.py` inlines `docs/images/logo.svg` into the banners when it exists. The illustrations are schematic, not screenshots.
 
@@ -263,6 +272,10 @@ Run from `outputs/flclash-guard/`, or use the copy inside the app at `"$HOME/App
 | `sudo ./egress-guard boot-on` / `boot-off` | yes | Registers or unregisters boot protection. |
 
 `boot-arm` is reserved for the installed boot service. `guard-guide daily`, `guard-guide cancel` and `guard-guide restored` are what the Finder scripts run.
+
+### Language selection
+
+The panel and menu-bar popover offer **Follow System**, **中文**, and **English**. The app stores only this choice in its own preferences (`interfaceLanguage`); no macOS language settings are changed. Follow System resolves a leading Chinese (`zh`) preferred language to Simplified Chinese and every other language to English. Existing progress and error text updates immediately when the language changes. The bundle filename stays `FlClash 出网保护.app` for login-item and Finder-script compatibility.
 
 ### Files and system changes
 
