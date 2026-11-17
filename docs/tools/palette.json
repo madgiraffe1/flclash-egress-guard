@@ -1,0 +1,15 @@
+{
+  "_comment": "Shared colours for docs/images. Edit here, then run docs/tools/render-screenshots.sh and docs/tools/make-illustrations.py.",
+  "ink": "#0B1F33",
+  "deep": "#08335C",
+  "mid": "#0E6F8F",
+  "bright": "#148CAB",
+  "glow": "#ADFAE0",
+  "accent": "#146BAD",
+  "annotation": "#0FA3B1",
+  "ok": "#22A06B",
+  "warn": "#E8871E",
+  "muted": "#64748B",
+  "line": "#D7E1EA",
+  "paper": "#F6F9FC"
+}

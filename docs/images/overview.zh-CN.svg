@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="960" height="380" viewBox="0 0 960 380" role="img" aria-label="FlClash 出网保护在 FlClash 正常连接和掉线时分别做什么">
+<title>FlClash 出网保护在 FlClash 正常连接和掉线时分别做什么</title>
+<defs>
+<style>text{font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Noto Sans SC', 'Helvetica Neue', Arial, sans-serif;} .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;}@keyframes fcg-dash{to{stroke-dashoffset:-32}}.fcg-flow{animation:fcg-dash 1.4s linear infinite}@media (prefers-reduced-motion: reduce){.fcg-flow{animation:none}}</style>
+<linearGradient id="fcg-brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#08335C"/><stop offset="1" stop-color="#148CAB"/></linearGradient>
+<filter id="fcg-shadow" x="-25%" y="-25%" width="150%" height="170%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#0B1F33" flood-opacity=".13"/></filter>
+</defs>
+<rect x=".5" y=".5" width="959" height="379" rx="22" fill="#F6F9FC" stroke="#D7E1EA"/>
+<rect x="24" y="24" width="444" height="332" rx="18" fill="#fff" stroke="#D7E1EA" stroke-width="1.2" filter="url(#fcg-shadow)"/>
+<g transform="translate(62 66) scale(1.45455)"><circle r="11" fill="#22A06B" stroke="#fff" stroke-width="2"/><path d="M-5 0.5l3.4 3.4L5.5 -4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="90" y="64" font-size="19" font-weight="700" fill="#0B1F33">FlClash 正常连接</text>
+<text x="90" y="86" font-size="14" font-weight="500" fill="#22A06B">日常保护已开启</text>
+<path d="M48 108H444" stroke="#D7E1EA"/>
+<path d="M144 202C220 222 282 242 350 242" fill="none" stroke="#22A06B" stroke-width="2.6"/>
+<path d="M130 158C140 136 146 136 184 136M308 136H362" fill="none" stroke="#148CAB" stroke-width="3"/>
+<path class="fcg-flow" d="M130 158C140 136 146 136 184 136M308 136H362" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="2 14" stroke-linecap="round"/>
+<g><rect x="184" y="119" width="124" height="34" rx="17" fill="#148CAB" fill-opacity="0.12" stroke="#148CAB" stroke-width="2"/><text x="246" y="141.5" font-size="15" font-weight="650" fill="#08335C" text-anchor="middle">FlClash · TUN</text></g>
+<g transform="translate(374 118) scale(0.909091)"><circle r="11" fill="#22A06B" stroke="#fff" stroke-width="2"/><path d="M-5 0.5l3.4 3.4L5.5 -4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g transform="translate(100 192) scale(0.82)"><rect x="-44" y="-34" width="88" height="58" rx="7" fill="#fff" fill-opacity="1" stroke="#0B1F33" stroke-width="2.6"/><rect x="-36" y="-26" width="72" height="42" rx="3" fill="#0B1F33" fill-opacity=".08"/><path d="M-56 28h112l-7 9h-98z" fill="#0B1F33"/></g>
+<g fill="none" stroke="#0B1F33" stroke-width="2.4"><circle cx="398" cy="144" r="30" fill="#fff" fill-opacity="1"/><ellipse cx="398" cy="144" rx="13.2" ry="30"/><path d="M368 144h60M370.774 131.4h54.4514M370.774 156.6h54.4514"/></g>
+<g transform="translate(392 242) scale(0.82)"><path d="M-20 -12l-7-18M20 -12l7-18" stroke="#0B1F33" stroke-width="2.6" stroke-linecap="round"/><rect x="-36" y="-12" width="72" height="28" rx="8" fill="#fff" fill-opacity="1" stroke="#0B1F33" stroke-width="2.6"/><circle cx="-18" cy="2" r="3" fill="#22A06B"/><circle cx="-6" cy="2" r="3" fill="#22A06B"/><circle cx="6" cy="2" r="3" fill="#22A06B"/></g>
+<g transform="translate(348 222) scale(0.909091)"><circle r="11" fill="#22A06B" stroke="#fff" stroke-width="2"/><path d="M-5 0.5l3.4 3.4L5.5 -4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="100" y="244" font-size="13" font-weight="600" fill="#64748B" text-anchor="middle">Mac</text>
+<text x="398" y="194" font-size="13" font-weight="600" fill="#64748B" text-anchor="middle">公网</text>
+<text x="392" y="278" font-size="13" font-weight="600" fill="#64748B" text-anchor="middle">局域网</text>
+<text x="50" y="314" font-size="14.5" font-weight="400" fill="#0B1F33" fill-opacity="0.85">应用只能经 FlClash 的虚拟网卡上公网，</text>
+<text x="50" y="335" font-size="14.5" font-weight="400" fill="#0B1F33" fill-opacity="0.85">想绕开它的连接一律丢弃。</text>
+<rect x="492" y="24" width="444" height="332" rx="18" fill="#fff" stroke="#D7E1EA" stroke-width="1.2" filter="url(#fcg-shadow)"/>
+<g transform="translate(530 66) scale(0.944444)"><circle r="18" fill="#E8871E" stroke="#fff" stroke-width="3"/><path d="M-5.5 -2v-4a5.5 5.5 0 0 1 11 0v4" fill="none" stroke="#fff" stroke-width="2.6"/><rect x="-8.5" y="-2" width="17" height="12.5" rx="2.5" fill="#fff"/></g>
+<text x="558" y="64" font-size="19" font-weight="700" fill="#0B1F33">FlClash 退出或虚拟网卡掉线</text>
+<text x="558" y="86" font-size="14" font-weight="500" fill="#E8871E">公网已锁住</text>
+<path d="M516 108H912" stroke="#D7E1EA"/>
+<path d="M612 202C688 222 750 242 818 242" fill="none" stroke="#22A06B" stroke-width="2.6"/>
+<path d="M598 158C608 136 614 136 652 136" fill="none" stroke="#64748B" stroke-opacity=".5" stroke-width="2.6" stroke-dasharray="5 7"/>
+<g opacity=".45"><rect x="652" y="119" width="124" height="34" rx="17" fill="#64748B" fill-opacity="0.06" stroke="#64748B" stroke-width="2"/><text x="714" y="141.5" font-size="15" font-weight="650" fill="#64748B" text-anchor="middle">FlClash · TUN</text></g>
+<g transform="translate(774 120) scale(0.909091)"><circle r="11" fill="#64748B" stroke="#fff" stroke-width="2"/><path d="M-4.2 -4.2l8.4 8.4M4.2 -4.2l-8.4 8.4" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></g>
+<path d="M618 190L834 162" stroke="#64748B" stroke-opacity=".55" stroke-width="2.6" stroke-dasharray="5 7"/>
+<g transform="translate(732 178) scale(0.944444)"><circle r="18" fill="#E8871E" stroke="#fff" stroke-width="3"/><path d="M-5.5 -2v-4a5.5 5.5 0 0 1 11 0v4" fill="none" stroke="#fff" stroke-width="2.6"/><rect x="-8.5" y="-2" width="17" height="12.5" rx="2.5" fill="#fff"/></g>
+<g transform="translate(568 192) scale(0.82)"><rect x="-44" y="-34" width="88" height="58" rx="7" fill="#fff" fill-opacity="1" stroke="#0B1F33" stroke-width="2.6"/><rect x="-36" y="-26" width="72" height="42" rx="3" fill="#0B1F33" fill-opacity=".08"/><path d="M-56 28h112l-7 9h-98z" fill="#0B1F33"/></g>
+<g fill="none" stroke="#0B1F33" stroke-width="2.4"><circle cx="866" cy="144" r="30" fill="#fff" fill-opacity="1"/><ellipse cx="866" cy="144" rx="13.2" ry="30"/><path d="M836 144h60M838.774 131.4h54.4514M838.774 156.6h54.4514"/></g>
+<g transform="translate(860 242) scale(0.82)"><path d="M-20 -12l-7-18M20 -12l7-18" stroke="#0B1F33" stroke-width="2.6" stroke-linecap="round"/><rect x="-36" y="-12" width="72" height="28" rx="8" fill="#fff" fill-opacity="1" stroke="#0B1F33" stroke-width="2.6"/><circle cx="-18" cy="2" r="3" fill="#22A06B"/><circle cx="-6" cy="2" r="3" fill="#22A06B"/><circle cx="6" cy="2" r="3" fill="#22A06B"/></g>
+<g transform="translate(816 222) scale(0.909091)"><circle r="11" fill="#22A06B" stroke="#fff" stroke-width="2"/><path d="M-5 0.5l3.4 3.4L5.5 -4" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="568" y="244" font-size="13" font-weight="600" fill="#64748B" text-anchor="middle">Mac</text>
+<text x="866" y="194" font-size="13" font-weight="600" fill="#64748B" text-anchor="middle">公网</text>
+<text x="860" y="278" font-size="13" font-weight="600" fill="#64748B" text-anchor="middle">局域网</text>
+<text x="518" y="314" font-size="14.5" font-weight="400" fill="#0B1F33" fill-opacity="0.85">不会悄悄改成直连。局域网、打印机和</text>
+<text x="518" y="335" font-size="14.5" font-weight="400" fill="#0B1F33" fill-opacity="0.85">本机服务照常可用，一键重新接通。</text>
+</svg>
