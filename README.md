@@ -23,6 +23,8 @@
   <img src="docs/images/banner.svg" width="100%" alt="FlClash Egress Guard: when FlClash drops, the public internet locks while the LAN keeps working">
 </p>
 
+<p align="center"><img src="docs/images/ui-demo.en.gif" width="660" alt="English interface sample states: first launch, user action needed, protected, internet locked and reconnected"></p>
+
 > [!NOTE]
 > The app supports English and Simplified Chinese. It follows your system language by default: Chinese uses Chinese; all other languages use English. Use **Language** in the panel or menu-bar popover to choose **Follow System**, **中文** or **English**. Changes apply immediately and are remembered.
 
@@ -54,8 +56,6 @@ It works with the firewall built into macOS, so there's nothing else to install.
 <p align="center">
   <img src="docs/images/overview.svg" width="100%" alt="Left: with FlClash connected, apps reach the internet only through FlClash and the LAN works. Right: when FlClash quits or its TUN goes down, the public internet is locked and the LAN still works.">
 </p>
-
-<p align="center"><img src="docs/images/ui-demo.en.gif" width="660" alt="English interface sample states: first launch, user action needed, protected, internet locked and reconnected"></p>
 
 *The screenshots and animation render the app’s actual views with sample states; they do not record a live network change.*
 

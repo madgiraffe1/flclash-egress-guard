@@ -23,6 +23,8 @@
   <img src="docs/images/banner.zh-CN.svg" width="100%" alt="FlClash 出网保护：FlClash 掉线时锁住公网，局域网照常可用">
 </p>
 
+<p align="center"><img src="docs/images/ui-demo.gif" width="600" alt="中文界面演示：首次打开、等待操作、保护开启、公网锁定、重新接通"></p>
+
 ## 目录
 
 - [它能做什么](#它能做什么)
@@ -51,8 +53,6 @@ FlClash 出网保护就是为了防止这种情况：
 <p align="center">
   <img src="docs/images/overview.zh-CN.svg" width="100%" alt="左：FlClash 正常连接时，应用只能经 FlClash 上公网，局域网可用。右：FlClash 退出或虚拟网卡掉线时，公网锁住，局域网仍可用。">
 </p>
-
-<p align="center"><img src="docs/images/ui-demo.gif" width="600" alt="中文界面演示：首次打开、等待操作、保护开启、公网锁定、重新接通"></p>
 
 *截图和动图由 App 的真实界面视图配合示例状态渲染，不代表执行了真实网络切换。*
 
