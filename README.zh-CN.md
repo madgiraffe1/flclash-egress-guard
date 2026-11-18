@@ -32,7 +32,7 @@
 - [日常使用](#日常使用)
 - [典型场景](#典型场景)
 - [系统要求](#系统要求) · [设置说明](#设置说明) · [卸载](#卸载)
-- [常见问题](#常见问题) · [故障排查](#故障排查) · [安全与隐私](#安全与隐私)
+- [常见问题](#常见问题) · [怎么验证保护生效](#怎么验证保护生效) · [故障排查](#故障排查) · [安全与隐私](#安全与隐私)
 - [路线图](#路线图) · [反馈](#反馈) · [致谢](#致谢) · [许可](#许可)
 
 ## 它能做什么
@@ -289,6 +289,51 @@ sudo "$HOME/Applications/FlClash 出网保护.app/Contents/Resources/guard-autho
 
 正常。授权和开机保护各会添加一个后台项目。请用 App 里的按钮来开关，不要在系统设置里关掉它们。
 </details>
+
+## 怎么验证保护生效
+
+不要在正在跑重要任务的时候测。下面会主动退出 FlClash，公网会被锁住，当前走它的会话也会中断。
+
+先点「开启日常保护」，走完四步，面板显示绿色的「已开启」。也可以点「刷新状态」。保护已装载时，用下面这条命令应能看到「保护已装载，核心使用」，后面是 utun 名称。读内核 pf 状态需要管理员权限。
+
+```
+sudo "$HOME/Applications/FlClash 出网保护.app/Contents/Resources/egress-guard" status
+```
+
+若 FlClash 和虚拟网卡都还在，也可以用 `preview` 做只读核对，这一步不需要 sudo。成功时会提示当前核心持有哪一张 utun。锁定之后核心已经退出，这条就不再适用，仍以 `status` 为准。
+
+```
+"$HOME/Applications/FlClash 出网保护.app/Contents/Resources/egress-guard" preview
+```
+
+然后从菜单栏退出 FlClash。盾牌或面板应变为「公网已锁住」。再跑一次 `status`，应出现「公网出口已锁定；局域网和回环例外仍有效。」也可以查看这条 anchor 里的活动规则。锁定时应能看到 `fcg-deny` 或开机锁定用的 `fcg-boot-deny`，不应再有 `fcg-core` 和 `fcg-tun`。
+
+```
+sudo pfctl -a com.apple/000.flclash-egress-guard -sr
+```
+
+接下来用工具自己那套检查目标看公网是否已锁住。它检查 Google 和抖音时，用的是带 `--max-time 6` 的 curl，并且加上 `--noproxy "*"`。最终规则是 `block drop out`，数据包会被丢弃，curl 往往会一直等到超时，退出码常见是 28，有时是 7。如果系统 DNS 指向公网解析器，名称解析本身也可能失败，退出码是 6。工具在锁定检查里把这两种结果都当作「连不上」。
+
+Google 和抖音可以各测一次：
+
+```
+curl -q --noproxy "*" --max-time 6 -o /dev/null -w "%{http_code}\n" https://www.google.com/
+curl -q --noproxy "*" --max-time 6 -o /dev/null -w "%{http_code}\n" https://www.douyin.com/
+```
+
+若想避开 DNS，直接测工具锁定检查里用的 `1.1.1.1` 的 443 端口。预期同样是超时连不上。
+
+```
+curl -q --noproxy "*" --max-time 6 -o /dev/null https://1.1.1.1/
+```
+
+局域网和回环应仍可用。例如下面这条应能通。访问局域网网关或其他局域网地址也应可达。若改用 curl 访问本机某个端口，而那里没有服务在听，连接会马上失败，一般等不到超时。
+
+```
+ping -c 2 127.0.0.1
+```
+
+测完后，点「重新接通 FlClash」，按向导走完。面板应回到绿色的「已开启」。再跑 `status`，应再次出现「保护已装载，核心使用」。对 Google 和抖音的 curl 应能收到 HTTP 状态码。App 里也可以点「查看日志」，或打开 `~/Library/Logs/FlClashEgressGuard/保护日志.txt`，里面会记下检查项和通过或不通过。
 
 ## 故障排查
 

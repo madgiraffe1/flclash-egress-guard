@@ -35,7 +35,7 @@
 - [Everyday use](#everyday-use)
 - [Typical scenarios](#typical-scenarios)
 - [System requirements](#system-requirements) · [Settings](#settings) · [Uninstall](#uninstall)
-- [FAQ](#faq) · [Troubleshooting](#troubleshooting) · [Security and privacy](#security-and-privacy)
+- [FAQ](#faq) · [Verify protection](#how-to-verify-protection-works) · [Troubleshooting](#troubleshooting) · [Security and privacy](#security-and-privacy)
 - [Roadmap](#roadmap) · [Feedback](#feedback) · [Acknowledgements](#acknowledgements) · [License](#license)
 
 ## What it does
@@ -292,6 +292,51 @@ No. The release is for Apple silicon only.
 
 Yes. The authorization and boot protection each add a background item. Please manage them with the app's buttons, not in System Settings.
 </details>
+
+## How to verify protection works
+
+Don't test while something important is running. The steps below quit FlClash on purpose, which locks the internet and cuts any session going through it.
+
+First click **Turn on daily protection**, finish the four steps, and wait for the panel to show a green **On**. You can also click **Refresh status**. While protection is loaded, the command below should print `保护已装载，核心使用` ("Protection is loaded; the core uses") followed by a utun name. The command-line tool prints its messages in Chinese. Reading the kernel pf state needs administrator rights.
+
+```
+sudo "$HOME/Applications/FlClash 出网保护.app/Contents/Resources/egress-guard" status
+```
+
+If FlClash and its TUN are still up, you can also run `preview` for a read-only check, without sudo. On success it tells you which utun the core holds. Once the internet is locked the core has exited, so this no longer applies; use `status` instead.
+
+```
+"$HOME/Applications/FlClash 出网保护.app/Contents/Resources/egress-guard" preview
+```
+
+Now quit FlClash from its menu-bar icon. The shield or panel should switch to **Internet locked**. Run `status` again and it should print `公网出口已锁定；局域网和回环例外仍有效。` ("The internet is locked. LAN and loopback access remain available."). You can also list the active rules in the anchor. While locked you should see `fcg-deny`, or `fcg-boot-deny` for boot protection, and no longer `fcg-core` or `fcg-tun`.
+
+```
+sudo pfctl -a com.apple/000.flclash-egress-guard -sr
+```
+
+Next, check the internet is locked using the same targets the tool checks. It tests Google and Douyin with curl, `--max-time 6` and `--noproxy "*"`. The final rule is `block drop out`, so packets are dropped and curl usually waits until it times out, most often with exit code 28 and sometimes 7. If your system DNS points at a public resolver, name resolution itself may fail with exit code 6. The tool's lock check treats both as "can't connect".
+
+Test Google and Douyin once each:
+
+```
+curl -q --noproxy "*" --max-time 6 -o /dev/null -w "%{http_code}\n" https://www.google.com/
+curl -q --noproxy "*" --max-time 6 -o /dev/null -w "%{http_code}\n" https://www.douyin.com/
+```
+
+To leave DNS out of it, test port 443 on `1.1.1.1`, which the lock check also uses. It should time out as well.
+
+```
+curl -q --noproxy "*" --max-time 6 -o /dev/null https://1.1.1.1/
+```
+
+The LAN and loopback should still work. For example, the command below should succeed, and your router or other LAN addresses should be reachable. If you curl a local port where nothing is listening, the connection fails right away instead of timing out.
+
+```
+ping -c 2 127.0.0.1
+```
+
+When you're done, click **Reconnect FlClash** and follow the wizard. The panel should return to a green **On**, and `status` should again print `保护已装载，核心使用`. The curl commands for Google and Douyin should get an HTTP status code back. In the app you can also click **View log**, or open `~/Library/Logs/FlClashEgressGuard/保护日志.txt`, which records each check and whether it passed.
 
 ## Troubleshooting
 
