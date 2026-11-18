@@ -351,6 +351,10 @@ FlClash Egress Guard is an independent project, not affiliated with or endorsed 
 
 [MIT](LICENSE) © 2026 madgiraffe1. FlClash, mihomo and macOS are separate products covered by their own licenses.
 
+## Friendly Links
+
+- [LINUX DO](https://linux.do), a new ideal community.
+
 [download]: https://github.com/madgiraffe1/flclash-egress-guard/releases/latest
 [releases]: https://github.com/madgiraffe1/flclash-egress-guard/releases/latest
 [issues]: https://github.com/madgiraffe1/flclash-egress-guard/issues/new/choose

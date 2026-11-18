@@ -348,6 +348,10 @@ FlClash 出网保护是独立项目，与 FlClash 项目没有隶属关系，也
 
 [MIT 许可证](LICENSE) © 2026 madgiraffe1。FlClash、mihomo 和 macOS 是各自独立的产品，适用各自的许可证。
 
+## 友情链接
+
+- [LINUX DO](https://linux.do)，新的理想型社区
+
 [download]: https://github.com/madgiraffe1/flclash-egress-guard/releases/latest
 [releases]: https://github.com/madgiraffe1/flclash-egress-guard/releases/latest
 [issues]: https://github.com/madgiraffe1/flclash-egress-guard/issues/new/choose
