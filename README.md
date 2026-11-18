@@ -13,7 +13,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0E6F8F" alt="License: MIT"></a>
   <a href="#system-requirements"><img src="https://img.shields.io/badge/macOS-13%2B-0E6F8F?logo=apple&logoColor=white" alt="macOS 13 or later"></a>
   <a href="#system-requirements"><img src="https://img.shields.io/badge/Apple%20silicon-arm64-0E6F8F" alt="Apple silicon"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-1.1.0-0E6F8F" alt="Version 1.1.0"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-1.2.0-0E6F8F" alt="Version 1.2.0"></a>
   <a href="https://github.com/chen08209/FlClash"><img src="https://img.shields.io/badge/works%20with-FlClash-0E6F8F" alt="Works with FlClash"></a>
 </p>
 
@@ -31,7 +31,7 @@
 ## Contents
 
 - [What it does](#what-it-does)
-- [Quick start](#quick-start): download, install, two clicks
+- [Quick start](#quick-start): download, install, guided setup
 - [Everyday use](#everyday-use)
 - [Typical scenarios](#typical-scenarios)
 - [System requirements](#system-requirements) · [Settings](#settings) · [Uninstall](#uninstall)
@@ -44,10 +44,10 @@ With FlClash's TUN mode on, your Mac's traffic goes through FlClash. But if FlCl
 
 FlClash Egress Guard stops that from happening:
 
-- **Locks the internet the moment FlClash drops.** Your Mac goes offline within about a second, instead of going direct.
+- **Locks the internet when FlClash stops.** The OS notifies the guard when FlClash's core exits, so locking is usually almost immediate. TUN and route changes are checked roughly once a second.
 - **Nothing gets around FlClash.** While connected, apps can only go online through FlClash. That includes background services and command-line tools that ignore proxy settings.
 - **Your local network keeps working.** Printers, NAS, AirPlay, your router and `localhost` stay reachable even while the internet is locked.
-- **One click to get back online:** **Reconnect FlClash**.
+- **Guided reconnection.** Click **Reconnect FlClash**, then follow the wizard to check protection and test the connection.
 - **Optional boot protection.** Every session starts locked, until you connect FlClash.
 - **Simple and private.** Your password is needed only once. FlClash's subscriptions, rules and DNS are left untouched. There's no telemetry, and one button undoes everything.
 
@@ -61,7 +61,7 @@ It works with the firewall built into macOS, so there's nothing else to install.
 
 ## Quick start
 
-About five minutes. The app does the technical part; you click two buttons.
+Allow about five minutes. Follow the app's prompts to authorize it, connect FlClash and check protection.
 
 ### Before you start
 
@@ -133,24 +133,31 @@ When the panel shows **On** with a green dot, you're protected. The app has chec
 
 Click the shield for a quick status. **Open panel** opens the full window, and the power button quits the menu-bar app. **Quitting the app doesn't turn protection off.**
 
+The footer's **GitHub repository** link opens the source in your default browser. **About** shows the app name, version, MIT license, repository and author profile; it is also available in the app menu.
+
 <p align="center"><img src="docs/images/ui-menubar.en.png" width="348" alt="Menu-bar popover: Daily protection On, Boot protection On, buttons Refresh status and Open panel"></p>
 
 | Icon | Panel shows | Meaning |
 | :---: | --- | --- |
 | <img src="docs/images/menubar-connected.en.png" height="30" alt="checkmark shield"> | **On** | Protected. Apps go online only through FlClash. |
-| <img src="docs/images/menubar-locked.en.png" height="30" alt="lock shield"> | **Internet locked** | FlClash quit or lost its TUN. The LAN still works. Click **Reconnect FlClash** to go back online. |
+| <img src="docs/images/menubar-locked.en.png" height="30" alt="lock shield"> | **Internet locked** | FlClash quit or lost its TUN. The LAN still works. Click **Reconnect FlClash** to start the wizard. |
 | <img src="docs/images/menubar-off.en.png" height="30" alt="crossed shield"> | **Off** | Protection is off. Apps use the network normally. |
 | <img src="docs/images/menubar-unknown.en.png" height="30" alt="exclamation shield"> | **Not checked** / **Re-check** | Something changed, for example FlClash just started or quit. Click the shield to check. |
 
 ### When it says Internet locked
 
-That's the kill switch doing its job. Click the shield, then **Open panel**, then **Reconnect FlClash**. The app reopens FlClash in protected mode and you're back online.
+That's the kill switch doing its job. Click the shield, then **Open panel**, then **Reconnect FlClash** to start the four-step wizard:
+
+1. **Check status:** the app reads the current protection rules.
+2. **Connect FlClash:** the app starts FlClash with the dedicated identity if needed. If prompted to quit FlClash first, quit it from its menu-bar icon, then click **Continue**. If prompted about TUN, turn on **虚拟网卡** (*TUN*) in FlClash, then click **Continue**.
+3. **Apply rules:** the app loads the protection rules and reads them back to verify them.
+4. **Test connection:** the app checks Google and Douyin. When the checks finish successfully, the panel shows **On** in green.
 
 <p align="center"><img src="docs/images/ui-locked.en.png" width="600" alt="Internet locked: click Reconnect FlClash"></p>
 
 ### Boot protection (optional)
 
-Without it, protection lasts until you restart. With it, your Mac starts with the internet locked, and the shield appears in the menu bar after you log in; open it and click **Reconnect FlClash**.
+Without it, protection lasts until you restart. With it, your Mac starts with the internet locked, and the shield appears in the menu bar after you log in; open it, click **Reconnect FlClash** and follow the wizard.
 
 Click **Turn on boot protection**. To stop it later, click **Turn off boot protection…**; this only affects future restarts. If it ever shows **Login launch incomplete**, click **Complete login launch**.
 
@@ -161,8 +168,8 @@ Click **Turn on boot protection**. To stop it later, click **Turn off boot prote
 
 ### After a restart
 
-- **Boot protection on:** click the shield, then **Open panel** and **Reconnect FlClash**.
-- **Boot protection off:** open **FlClash Egress Guard** from `~/Applications` and click **Turn on daily protection** again.
+- **Boot protection on:** click the shield, then **Open panel** and **Reconnect FlClash**, and follow the wizard.
+- **Boot protection off:** open **FlClash Egress Guard** from `~/Applications`, click **Turn on daily protection** again and follow the wizard.
 
 ### Back to normal internet
 
@@ -202,7 +209,7 @@ The other settings are buttons in the app.
 | Button | What it does |
 | --- | --- |
 | **Authorize once** / **Revoke authorization…** | Lets the app manage protection without asking for your password, or takes that permission back. Protection itself is unaffected. |
-| **Turn on daily protection** / **Reconnect FlClash** | Turns protection on and connects FlClash. Lasts until you restart or remove protection. |
+| **Turn on daily protection** / **Reconnect FlClash** | Starts the wizard to connect FlClash, verify protection rules and test the connection. Protection lasts until you restart or remove it. |
 | **Turn on boot protection** / **Turn off boot protection…** | Starts every session with the internet locked. |
 | **Remove all protection…** | Restores your original setup. |
 | **Refresh status** · **View log** | Re-checks the status · opens the log. |
@@ -253,7 +260,7 @@ No. Protection keeps running after you close the window or quit the app.
 <details>
 <summary><b>I quit FlClash on purpose. Why is my internet gone?</b></summary>
 
-That's the kill switch. Click **Reconnect FlClash** to go back online through FlClash, or **Remove all protection…** to use the internet without it.
+That's the kill switch. Click **Reconnect FlClash** and follow the [reconnection wizard](#when-it-says-internet-locked), or **Remove all protection…** to use the internet without it.
 </details>
 
 <details>
@@ -265,7 +272,7 @@ Yes, as long as they're on your local network. Addresses in `100.64.0.0/10` (use
 <details>
 <summary><b>Does protection survive a restart?</b></summary>
 
-Daily protection doesn't, so click **Turn on daily protection** again after restarting. Turn on boot protection if you want every session to start locked.
+Daily protection doesn't, so click **Turn on daily protection** again after restarting and follow the wizard. Turn on boot protection if you want every session to start locked.
 </details>
 
 <details>
@@ -315,7 +322,7 @@ The panel shows what went wrong. The most common messages:
 - No telemetry. The only connections the app makes itself are its checks to Google, Douyin and `1.1.1.1`.
 - The log holds only times, check names and pass/fail. No addresses.
 - It's a safety net, not antivirus: software that already has administrator rights could still change the firewall.
-- Download only from the official release page, and compare the SHA-256 shown there: `shasum -a 256 ~/Downloads/FlClash-Egress-Guard-macOS-arm64.zip`.
+- Download only from the official release page. From the folder containing the downloaded ZIP, compare the SHA-256 shown there with `shasum -a 256 FlClash-Egress-Guard-macOS-arm64.zip`.
 
 Found a security problem? Please report it privately; see [SECURITY.md](SECURITY.md).
 

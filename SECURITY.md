@@ -45,4 +45,4 @@ Out of scope (known limitations):
 - The helper only works for the user who authorized it and for the exact copy of the app that was approved, and it only performs a fixed set of protection actions.
 - The app never removes or overrides other software's firewall rules.
 - The log contains only times, check names and pass/fail.
-- Releases are signed locally and not notarized. Download them only from the official release page and compare the SHA-256 shown there: `shasum -a 256 FlClash-Egress-Guard-macOS-arm64.zip`.
+- Releases are signed locally and not notarized. Download them only from the official release page. From the folder containing the downloaded ZIP, compare the SHA-256 shown there with `shasum -a 256 FlClash-Egress-Guard-macOS-arm64.zip`.

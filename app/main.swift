@@ -605,11 +605,38 @@ struct GuardPanel: View {
     }
 }
 
+enum AppLinks {
+    static let repository = URL(string: "https://github.com/madgiraffe1/flclash-egress-guard")!
+    static let author = URL(string: "https://github.com/madgiraffe1")!
+}
+
+struct AboutPanel: View {
+    @ObservedObject private var localization = Localization.shared
+
+    private var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—" }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "shield.lefthalf.filled")
+                .font(.system(size: 40)).foregroundStyle(Color(red: 0.08, green: 0.42, blue: 0.68))
+            Text(L10n.text("FlClash 出网保护")).font(.title2.weight(.semibold))
+            Text(L10n.text("版本 %@", version)).foregroundStyle(.secondary)
+            Text(L10n.text("MIT 许可")).font(.callout).foregroundStyle(.secondary)
+            Divider().padding(.vertical, 4)
+            HStack(spacing: 24) {
+                Link(L10n.text("GitHub 仓库"), destination: AppLinks.repository)
+                Link(L10n.text("作者主页"), destination: AppLinks.author)
+            }.buttonStyle(.link)
+        }.padding(24).frame(width: 380).background(Color(nsColor: .windowBackgroundColor))
+    }
+}
+
 struct MenuPanel: View {
     @ObservedObject var model: Controls
     @ObservedObject private var localization = Localization.shared
     let refresh: () -> Void
     let openPanel: () -> Void
+    let showAbout: () -> Void
     let quit: () -> Void
 
     var body: some View {
@@ -649,6 +676,11 @@ struct MenuPanel: View {
                     .buttonStyle(.plain).help(L10n.text("退出状态栏 App，防火墙继续运行"))
                     .accessibilityLabel(L10n.text("退出状态栏 App"))
             }
+            HStack {
+                Link(L10n.text("GitHub 仓库"), destination: AppLinks.repository)
+                Spacer()
+                Button(L10n.text("关于"), action: showAbout)
+            }.font(.caption).buttonStyle(.plain).foregroundStyle(.secondary)
         }.padding(16).frame(width: localization.menuWidth)
     }
 }
@@ -660,6 +692,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let popover = NSPopover()
     private var observer: AnyCancellable?
     private var languageObserver: AnyCancellable?
+    private var aboutItem: NSMenuItem?
+    private var aboutWindow: NSWindow?
     private var quitItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -667,6 +701,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         main.addItem(item); item.submenu = appMenu
         item.title = L10n.text("FlClash 出网保护")
         appMenu.title = L10n.text("FlClash 出网保护")
+        let about = NSMenuItem(title: L10n.text("关于"), action: #selector(showAbout), keyEquivalent: "")
+        about.target = self
+        appMenu.addItem(about)
+        appMenu.addItem(.separator())
+        aboutItem = about
         let quit = NSMenuItem(title: L10n.text("退出出网保护面板"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appMenu.addItem(quit)
         quitItem = quit
@@ -710,7 +749,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             guard let self = self else { return }
             self.popover.behavior = .applicationDefined
             self.controls.start("status")
-        }, openPanel: { [weak self] in self?.openPanel(verify: false) }, quit: { NSApp.terminate(nil) })
+        }, openPanel: { [weak self] in self?.openPanel(verify: false) },
+           showAbout: { [weak self] in self?.showAbout() }, quit: { NSApp.terminate(nil) })
         popover.contentViewController = NSHostingController(rootView: panel)
         popover.behavior = .transient
         popover.animates = false
@@ -741,6 +781,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private func updateLanguage() {
         window.title = L10n.text("FlClash 出网保护")
+        aboutItem?.title = L10n.text("关于")
+        aboutWindow?.title = L10n.text("关于")
         quitItem?.title = L10n.text("退出出网保护面板")
         NSApp.mainMenu?.items.first?.title = L10n.text("FlClash 出网保护")
         NSApp.mainMenu?.items.first?.submenu?.title = L10n.text("FlClash 出网保护")
@@ -751,6 +793,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         if let content = popover.contentViewController?.view { popover.contentSize = content.fittingSize }
         updateIcon()
+    }
+
+    @objc private func showAbout() {
+        if popover.isShown { popover.performClose(nil) }
+        if aboutWindow == nil {
+            let host = NSHostingController(rootView: AboutPanel())
+            let about = NSWindow(contentViewController: host)
+            about.title = L10n.text("关于")
+            about.styleMask = [.titled, .closable]
+            about.isReleasedWhenClosed = false
+            about.setContentSize(host.view.fittingSize)
+            about.center()
+            aboutWindow = about
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        aboutWindow?.makeKeyAndOrderFront(nil)
     }
 
     @objc private func togglePopover() {
