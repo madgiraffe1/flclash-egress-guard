@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-freeware-0E6F8F" alt="许可：免费软件"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0E6F8F" alt="许可：MIT"></a>
   <a href="#系统要求"><img src="https://img.shields.io/badge/macOS-13%2B-0E6F8F?logo=apple&logoColor=white" alt="macOS 13 及以上"></a>
   <a href="#系统要求"><img src="https://img.shields.io/badge/Apple%20silicon-arm64-0E6F8F" alt="Apple 芯片"></a>
   <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-1.1.0-0E6F8F" alt="版本 1.1.0"></a>
@@ -339,7 +339,7 @@ FlClash 出网保护是独立项目，与 FlClash 项目没有隶属关系，也
 
 ## 许可
 
-免费下载使用。© 2026 madgiraffe1。详见 [LICENSE](LICENSE)。
+[MIT 许可证](LICENSE) © 2026 madgiraffe1。FlClash、mihomo 和 macOS 是各自独立的产品，适用各自的许可证。
 
 [download]: https://github.com/madgiraffe1/flclash-egress-guard/releases/latest/download/FlClash-Egress-Guard-macOS-arm64.zip
 [releases]: https://github.com/madgiraffe1/flclash-egress-guard/releases/latest

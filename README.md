@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-freeware-0E6F8F" alt="License: freeware"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0E6F8F" alt="License: MIT"></a>
   <a href="#system-requirements"><img src="https://img.shields.io/badge/macOS-13%2B-0E6F8F?logo=apple&logoColor=white" alt="macOS 13 or later"></a>
   <a href="#system-requirements"><img src="https://img.shields.io/badge/Apple%20silicon-arm64-0E6F8F" alt="Apple silicon"></a>
   <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-1.1.0-0E6F8F" alt="Version 1.1.0"></a>
@@ -342,7 +342,7 @@ FlClash Egress Guard is an independent project, not affiliated with or endorsed 
 
 ## License
 
-Free to download and use. © 2026 madgiraffe1. See [LICENSE](LICENSE).
+[MIT](LICENSE) © 2026 madgiraffe1. FlClash, mihomo and macOS are separate products covered by their own licenses.
 
 [download]: https://github.com/madgiraffe1/flclash-egress-guard/releases/latest/download/FlClash-Egress-Guard-macOS-arm64.zip
 [releases]: https://github.com/madgiraffe1/flclash-egress-guard/releases/latest

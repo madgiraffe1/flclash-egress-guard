@@ -106,7 +106,7 @@ Colours live in `docs/tools/palette.json`; `make-illustrations.py` inlines `docs
 4. Record `shasum -a 256 FlClash-Egress-Guard-macOS-arm64.zip` in the release notes and the changelog.
 5. Publish the release with the zip attached, keeping the asset name so the README's "latest" download link keeps working.
 
-**Closed source, public releases.** A private repository's releases are private, and this repository's history contains the full source, so **never make this repository public**. Publish from a separate public repository with fresh history that contains only the user-facing files: `README.md`, `README.zh-CN.md`, `LICENSE`, `CHANGELOG.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `.github/ISSUE_TEMPLATE/` and `docs/images/`. Then point the reference links at the bottom of both READMEs (`[download]`, `[releases]`, `[issues]`) and the links in `CONTRIBUTING.md`, `CHANGELOG.md` and `.github/ISSUE_TEMPLATE/config.yml` to that repository.
+**Open source.** This repository is public under the MIT license. Releases are published from this repository, and the reference links at the bottom of both READMEs (`[download]`, `[releases]`, `[issues]`) point here.
 
 Note that the app bundle ships the controller (`egress-guard`, `guard-guide`, `policy.pf`, `guard-authorize`, `Authorize.applescript`) as readable text; only the Swift parts are compiled.
 

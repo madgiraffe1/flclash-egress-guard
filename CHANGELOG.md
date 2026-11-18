@@ -6,12 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- The source is now public under the MIT license.
+
 ### Added
 
 - English and Simplified Chinese interfaces, with a remembered language choice and system-language default (English for non-Chinese systems).
 - English README screenshots and bilingual walkthrough GIFs rendered from the app's views without starting protection services.
 - User guide in English and Simplified Chinese, with screenshots and illustrations.
-- Freeware license, security policy, code of conduct, feedback guide and issue forms.
+- Security policy, code of conduct, feedback guide and issue forms.
 
 ## [1.1.0] - 2026-11-16
 
