@@ -133,6 +133,8 @@ When the panel shows **On** with a green dot, you're protected. The app has chec
 
 Click the shield for a quick status. **Open panel** opens the full window, and the power button quits the menu-bar app. **Quitting the app doesn't turn protection off.**
 
+The footer's **GitHub repository** link opens the source in your default browser. **About** shows the app name, version, MIT license, repository and author profile; it is also available in the app menu.
+
 <p align="center"><img src="docs/images/ui-menubar.en.png" width="348" alt="Menu-bar popover: Daily protection On, Boot protection On, buttons Refresh status and Open panel"></p>
 
 | Icon | Panel shows | Meaning |

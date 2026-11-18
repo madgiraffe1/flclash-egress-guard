@@ -1,8 +1,8 @@
 // Renders the README screenshots from the app's real SwiftUI views.
 //
 // render-screenshots.sh appends this file to a copy of app/main.swift with its
-// final launch lines removed, so the views below are the shipping GuardPanel and
-// MenuPanel. Nothing here starts guard-guide, the system helper, pfctl or any
+// final launch lines removed, so the views below are the shipping GuardPanel,
+// MenuPanel and AboutPanel. Nothing here starts guard-guide, the system helper, pfctl or any
 // network request: each scene only assigns sample values to the view model and
 // draws offscreen. Sample data contains no real addresses or user names.
 
@@ -140,7 +140,7 @@ final class ScreenshotRenderer {
     }
 
     func captureMenu(_ model: Controls) -> (NSBitmapImageRep, NSSize) {
-        let host = NSHostingView(rootView: MenuPanel(model: model, refresh: {}, openPanel: {}, quit: {})
+        let host = NSHostingView(rootView: MenuPanel(model: model, refresh: {}, openPanel: {}, showAbout: {}, quit: {})
             .environment(\.controlActiveState, .key))
         let size = host.fittingSize
         let window = ActiveLookingWindow(contentRect: NSRect(origin: NSPoint(x: -30000, y: -30000), size: size),
@@ -151,6 +151,23 @@ final class ScreenshotRenderer {
         RunLoop.current.run(until: Date().addingTimeInterval(0.4))
         let rep = bitmap(size: size)
         host.cacheDisplay(in: host.bounds, to: rep)
+        window.close()
+        return (rep, size)
+    }
+
+    func captureAbout() -> (NSBitmapImageRep, NSSize) {
+        let host = NSHostingController(rootView: AboutPanel().environment(\.controlActiveState, .key))
+        let window = ActiveLookingWindow(contentViewController: host)
+        window.title = L10n.text("关于")
+        window.styleMask = [.titled, .closable]
+        window.appearance = NSAppearance(named: .aqua)
+        window.setContentSize(host.view.fittingSize)
+        window.setFrameOrigin(NSPoint(x: -30000, y: -30000))
+        RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+        let frameView = window.contentView!.superview!
+        let size = frameView.bounds.size
+        let rep = bitmap(size: size)
+        frameView.cacheDisplay(in: frameView.bounds, to: rep)
         window.close()
         return (rep, size)
     }
@@ -324,6 +341,9 @@ final class ScreenshotRenderer {
         // 7. Menu-bar popover.
         let (menu, menuSize) = captureMenu(connected(boot: "on"))
         write(compose(menu, size: menuSize, radius: 12), "ui-menubar.png")
+
+        let (about, aboutSize) = captureAbout()
+        write(compose(about, size: aboutSize, radius: 12), "ui-about.png")
 
         menuIcons()
         animation([firstRun, waiting, connected(boot: "off"), locked, connected(boot: "on")])

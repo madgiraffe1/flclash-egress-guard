@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Bilingual GitHub repository link in the menu-bar footer and an About window with the app version, MIT license and author profile.
 - English and Simplified Chinese interfaces, with a remembered language choice and system-language default (English for non-Chinese systems).
 - English README screenshots and bilingual walkthrough GIFs rendered from the app's views without starting protection services.
 - User guide in English and Simplified Chinese, with screenshots and illustrations.
