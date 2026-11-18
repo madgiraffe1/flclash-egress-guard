@@ -4,7 +4,7 @@ All notable changes to FlClash Egress Guard are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2026-11-17
 
 ### Changed
 
@@ -12,7 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- Bilingual GitHub repository link in the menu-bar footer and an About window with the app version, MIT license and author profile.
+- Bilingual GitHub repository link in the menu-bar footer that opens the source in the default browser.
+- About window with the app name, version, MIT license, repository and author profile links, available from the menu-bar footer and app menu.
 - English and Simplified Chinese interfaces, with a remembered language choice and system-language default (English for non-Chinese systems).
 - English README screenshots and bilingual walkthrough GIFs rendered from the app's views without starting protection services.
 - User guide in English and Simplified Chinese, with screenshots and illustrations.
@@ -31,5 +32,5 @@ First public version. Apple silicon, macOS 13 or later.
 - One-time authorization, so daily use doesn't ask for a password.
 - Release asset `FlClash-Egress-Guard-macOS-arm64.zip`, signed locally and not notarized, SHA-256 `3963ca32748f2b735b9c937aeb9450da2a0ce5d5e1b2fbffe7158b2e2c202315`.
 
-[Unreleased]: https://github.com/madgiraffe1/flclash-egress-guard/releases
+[1.2.0]: https://github.com/madgiraffe1/flclash-egress-guard/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/madgiraffe1/flclash-egress-guard/releases/tag/v1.1.0

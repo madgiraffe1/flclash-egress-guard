@@ -13,7 +13,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0E6F8F" alt="许可：MIT"></a>
   <a href="#系统要求"><img src="https://img.shields.io/badge/macOS-13%2B-0E6F8F?logo=apple&logoColor=white" alt="macOS 13 及以上"></a>
   <a href="#系统要求"><img src="https://img.shields.io/badge/Apple%20silicon-arm64-0E6F8F" alt="Apple 芯片"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-1.1.0-0E6F8F" alt="版本 1.1.0"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-1.2.0-0E6F8F" alt="版本 1.2.0"></a>
   <a href="https://github.com/chen08209/FlClash"><img src="https://img.shields.io/badge/works%20with-FlClash-0E6F8F" alt="配合 FlClash 使用"></a>
 </p>
 

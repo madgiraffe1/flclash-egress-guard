@@ -27,7 +27,7 @@ app/                      macOS menu-bar app (Swift/SwiftUI) and its privileged 
   guard-authorize         installs or removes the helper (run through the macOS admin dialog)
   Authorize.applescript   shows the macOS administrator dialog
   Icon.swift              draws the app icon at build time
-  Info.plist, build.sh    bundle metadata (version 1.1.0, macOS 13+) and the build script
+  Info.plist, build.sh    bundle metadata (version 1.2.0, macOS 13+) and the build script
 outputs/flclash-guard/    the controller; despite the name this is source, not build output
   egress-guard            root pf controller (Python 3, system interpreter)
   guard-guide             user-side guide: steps, checks, login item

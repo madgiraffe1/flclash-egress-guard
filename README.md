@@ -13,7 +13,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0E6F8F" alt="License: MIT"></a>
   <a href="#system-requirements"><img src="https://img.shields.io/badge/macOS-13%2B-0E6F8F?logo=apple&logoColor=white" alt="macOS 13 or later"></a>
   <a href="#system-requirements"><img src="https://img.shields.io/badge/Apple%20silicon-arm64-0E6F8F" alt="Apple silicon"></a>
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-1.1.0-0E6F8F" alt="Version 1.1.0"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/version-1.2.0-0E6F8F" alt="Version 1.2.0"></a>
   <a href="https://github.com/chen08209/FlClash"><img src="https://img.shields.io/badge/works%20with-FlClash-0E6F8F" alt="Works with FlClash"></a>
 </p>
 
