@@ -1,7 +1,7 @@
-# Development notes (internal)
+# Development notes
 
-> [!IMPORTANT]
-> Internal document for the **private source repository**. Don't copy it, `app/`, `outputs/` or `docs/tools/` to a public repository: the source code is not published. See [Releasing](#releasing) for what can go public.
+> [!NOTE]
+> Notes for building, testing and releasing the app from this repository.
 
 ## Contents
 

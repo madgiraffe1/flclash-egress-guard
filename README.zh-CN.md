@@ -327,7 +327,7 @@ sudo "$HOME/Applications/FlClash 出网保护.app/Contents/Resources/guard-autho
 
 ## 反馈
 
-App 的源码不公开，但非常欢迎反馈：[报告问题或提出建议][issues]（见 [CONTRIBUTING.md](CONTRIBUTING.md)）。请遵守[行为准则](CODE_OF_CONDUCT.md)。
+源码已在本仓库公开，欢迎反馈和提交 PR：[报告问题或提出建议][issues]（见 [CONTRIBUTING.md](CONTRIBUTING.md)）。请遵守[行为准则](CODE_OF_CONDUCT.md)。
 
 ## 致谢
 

@@ -330,7 +330,7 @@ Ideas, not promises:
 
 ## Feedback
 
-The app's source code isn't public, but feedback is very welcome: [report a bug or suggest a feature][issues] (see [CONTRIBUTING.md](CONTRIBUTING.md)). Please follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+The source code is public in this repository. Feedback and pull requests are welcome: [report a bug or suggest a feature][issues] (see [CONTRIBUTING.md](CONTRIBUTING.md)). Please follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Acknowledgements
 

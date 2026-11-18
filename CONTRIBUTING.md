@@ -2,7 +2,7 @@
 
 **English** · [简体中文](#反馈与问题报告)
 
-Thanks for helping improve FlClash Egress Guard. The source code isn't public, so code contributions and pull requests can't be accepted, but these help a lot:
+Thanks for helping improve FlClash Egress Guard. The source code is public, and pull requests are welcome. For larger changes, please open an issue first so we can agree on the approach. These help a lot too:
 
 - **Report a bug** with the [bug report form](https://github.com/madgiraffe1/flclash-egress-guard/issues/new/choose). Include the app and macOS versions, what the panel said, and the relevant lines from **查看日志** (*View log*).
 - **Suggest an idea** with the feature request form on the same page.
@@ -14,7 +14,7 @@ Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## 反馈与问题报告
 
-感谢你帮助改进 FlClash 出网保护。本项目源码不公开，因此无法接受代码贡献或 PR，但以下反馈非常有帮助：
+感谢你帮助改进 FlClash 出网保护。本项目源码已公开，欢迎提交 PR。较大的改动请先开 issue 讨论方案。以下反馈也非常有帮助：
 
 - **报告问题**：用[问题报告模板](https://github.com/madgiraffe1/flclash-egress-guard/issues/new/choose)提交 issue，写明 App 和 macOS 版本、面板上的提示，以及「查看日志」里的相关记录。
 - **提出建议**：在同一页面选择功能建议模板。

@@ -1,6 +1,6 @@
 ## What and why
 
-<!-- Internal pull requests only: the source is private. What does this change, and why? -->
+<!-- What does this change, and why? -->
 
 ## How I tested it
 
